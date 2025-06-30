@@ -9,6 +9,7 @@ export const useAuth = () => {
   const [isEmployer, setIsEmployer] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
+  // Always define useCallback - never conditionally
   const initialize = useCallback(async () => {
     if (initialized) {
       console.log("useAuth - Already initialized, skipping")
@@ -51,11 +52,12 @@ export const useAuth = () => {
       console.log("useAuth - initialize completed, setting isLoading to false")
       setIsLoading(false)
     }
-  }, [initialized])
+  }, [initialized]) // Keep dependency array
 
   useEffect(() => {
     console.log("useAuth - useEffect running, initialized:", initialized)
     
+    // Only initialize once
     if (!initialized) {
       initialize()
     }
@@ -90,7 +92,7 @@ export const useAuth = () => {
     return () => {
       subscription.unsubscribe()
     }
-  }, [initialize])
+  }, [initialize]) // Use initialize in dependency array
 
   const signIn = async (email: string, password: string) => {
     console.log("Signing in with email:", email)
