@@ -13,7 +13,7 @@ interface MoveConfirmationModal {
 }
 
 const DragDropPipeline: React.FC = () => {
-  const { accessToken, isAuthenticated, user } = useAuth()
+  const { accessToken, isAuthenticated, user, isLoading: authLoading } = useAuth()
   
   const [stages, setStages] = useState<PipelineStageWithCandidates[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -32,15 +32,26 @@ const DragDropPipeline: React.FC = () => {
 
   // Load pipeline data on component mount
   useEffect(() => {
-    console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id })
-    if (isAuthenticated && user) {
-      loadPipelineDataForUser()
+    console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id, authLoading })
+    
+    // Wait for auth to complete loading
+    if (authLoading) {
+      console.log("DragDropPipeline - Auth still loading, waiting...")
+      return
     }
-  }, [isAuthenticated, user])
+    
+    if (isAuthenticated && user) {
+      console.log("DragDropPipeline - Loading pipeline data for authenticated user")
+      loadPipelineDataForUser()
+    } else {
+      console.log("DragDropPipeline - User not authenticated, setting loading to false")
+      setIsLoading(false)
+    }
+  }, [isAuthenticated, user, authLoading])
 
   const loadPipelineDataForUser = async () => {
     try {
-      console.log("Loading pipeline data for user")
+      console.log("DragDropPipeline - Starting to load pipeline data for user:", user?.id)
       setIsLoading(true)
       
       // Get the user's profile to find their recruiter ID
@@ -51,22 +62,23 @@ const DragDropPipeline: React.FC = () => {
         .eq('role', 'recruiter')
         .single()
 
-      console.log("Profile query result:", { profile, error: profileError })
+      console.log("DragDropPipeline - Profile query result:", { profile, error: profileError })
 
       if (profileError || !profile) {
-        console.error('Failed to get recruiter profile:', profileError)
+        console.error('DragDropPipeline - Failed to get recruiter profile:', profileError)
         setStages([])
         return
       }
 
-      console.log("Calling loadPipelineData with profile ID:", profile.id)
+      console.log("DragDropPipeline - Calling loadPipelineData with profile ID:", profile.id)
       const pipelineData = await loadPipelineData(profile.id)
-      console.log("Pipeline data loaded:", pipelineData)
+      console.log("DragDropPipeline - Pipeline data loaded:", pipelineData.length, "stages")
       setStages(pipelineData)
     } catch (error) {
-      console.error('Failed to load pipeline data:', error)
+      console.error('DragDropPipeline - Failed to load pipeline data:', error)
       setStages([])
     } finally {
+      console.log("DragDropPipeline - Setting loading to false")
       setIsLoading(false)
     }
   }
@@ -327,7 +339,7 @@ const DragDropPipeline: React.FC = () => {
   }
 
   // Show authentication warning if not logged in
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <div className="space-y-6">
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-6">
@@ -343,7 +355,8 @@ const DragDropPipeline: React.FC = () => {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
+    console.log("DragDropPipeline - Rendering loading state")
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -354,7 +367,7 @@ const DragDropPipeline: React.FC = () => {
     )
   }
 
-  console.log("Rendering pipeline with stages:", stages)
+  console.log("DragDropPipeline - Rendering pipeline with stages:", stages.length)
 
   return (
     <div className="space-y-6">

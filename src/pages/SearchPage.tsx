@@ -3,7 +3,6 @@ import DashboardLayout from '../components/layout/DashboardLayout'
 import { Search, Filter, Users, Shield, Clock, Star, AlertTriangle, X, ChevronDown, MapPin, DollarSign, Calendar } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { searchCandidates, CandidateSearchResult, SearchFilters } from '../services/candidateService'
-import SetupProfileBanner from '../components/common/SetupProfileBanner'
 import { supabase } from '../services/supabase'
 
 // Candidate Card component
@@ -298,7 +297,7 @@ const SearchInterface = ({ onSearch }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            className="w-full pl-16 pr-40 py-5 bg-background-panel border border-gray-600 rounded-2xl text-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 shadow-lg"
+            className="w-full pl-16 pr-48 py-5 bg-background-panel border border-gray-600 rounded-2xl text-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 shadow-lg"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-3">
             <button
@@ -553,47 +552,8 @@ const SearchPage: React.FC = () => {
   const [showResults, setShowResults] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
 
   console.log("SearchPage - Auth state:", { isAuthenticated, userId: user?.id })
-
-  // Check if user needs to set up their profile
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      checkProfileStatus()
-    }
-  }, [isAuthenticated, user])
-
-  const checkProfileStatus = async () => {
-    try {
-      console.log("Checking profile status for user:", user?.id)
-      // Check if the user has a profile with required fields
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, headline, completion_score')
-        .eq('user_id', user!.id)
-        .single()
-
-      console.log("Profile status check result:", { data, error })
-
-      if (error) {
-        console.error('Error checking profile status:', error)
-        setNeedsProfileSetup(true)
-        return
-      }
-
-      // Check if essential fields are missing
-      const isMissingFields = !data.first_name || !data.last_name || !data.headline
-      
-      // Check if completion score is too low
-      const hasLowScore = !data.completion_score || data.completion_score < 10
-      
-      setNeedsProfileSetup(isMissingFields || hasLowScore)
-    } catch (error) {
-      console.error('Error checking profile status:', error)
-      setNeedsProfileSetup(true)
-    }
-  }
 
   const handleSearch = async (searchData: { query: string } & SearchFilters) => {
     console.log('Search performed with data:', searchData)
@@ -679,9 +639,6 @@ const SearchPage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Profile Setup Banner */}
-        {needsProfileSetup && <SetupProfileBanner className="mb-8" />}
-        
         {!showResults ? (
           <div className="space-y-8">
             <SearchInterface onSearch={handleSearch} />
