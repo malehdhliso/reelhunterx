@@ -66,12 +66,7 @@ export async function searchCandidates(
 
     // Apply text search if query provided
     if (query && query.trim()) {
-      queryBuilder = queryBuilder.or(`
-        first_name.ilike.%${query}%,
-        last_name.ilike.%${query}%,
-        headline.ilike.%${query}%,
-        email.ilike.%${query}%
-      `)
+      queryBuilder = queryBuilder.or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,headline.ilike.%${query}%,email.ilike.%${query}%`)
     }
 
     // Apply ReelPass filter
