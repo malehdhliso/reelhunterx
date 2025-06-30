@@ -4,38 +4,40 @@ import SearchInterface from '../components/search/SearchInterface'
 import CandidateCard from '../components/candidates/CandidateCard'
 import { Search, Filter, Users, Shield, Clock, Star } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { searchCandidates, CandidateSearchResult, SearchFilters } from '../services/candidateService'
 
 const SearchPage: React.FC = () => {
   const { isAuthenticated } = useAuth()
-  const [searchResults, setSearchResults] = useState([])
+  const [searchResults, setSearchResults] = useState<CandidateSearchResult[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSearch = async (searchData: any) => {
+  const handleSearch = async (searchData: { query: string } & SearchFilters) => {
     console.log('Search performed with data:', searchData)
     setIsLoading(true)
+    setError(null)
     
     try {
-      // TODO: Implement actual search API call
-      // const results = await searchCandidates(searchData)
-      // setSearchResults(results)
-      
-      // For now, show empty results
-      setSearchResults([])
+      const results = await searchCandidates(searchData.query, searchData)
+      setSearchResults(results)
       setShowResults(true)
     } catch (error) {
       console.error('Search failed:', error)
+      setError(error instanceof Error ? error.message : 'Search failed')
+      setSearchResults([])
+      setShowResults(true)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSelectCandidate = (candidate: any) => {
+  const handleSelectCandidate = (candidate: CandidateSearchResult) => {
     console.log('Selected candidate:', candidate)
     // TODO: Navigate to candidate profile
   }
 
-  const handleAddToPipeline = (candidate: any) => {
+  const handleAddToPipeline = (candidate: CandidateSearchResult) => {
     console.log('Adding to pipeline:', candidate)
     // TODO: Add to pipeline logic
     showNotification('✅ Candidate Added to Pipeline', `${candidate.firstName} ${candidate.lastName} has been added to your pipeline`)
@@ -60,6 +62,16 @@ const SearchPage: React.FC = () => {
     document.body.appendChild(notification)
     setTimeout(() => notification.remove(), 5000)
   }
+
+  const getVerificationStats = () => {
+    const verified = searchResults.filter(c => c.verificationStatus === 'verified').length
+    const available = searchResults.filter(c => c.availabilityStatus === 'available').length
+    const highScore = searchResults.filter(c => c.reelpassScore >= 80).length
+    
+    return { verified, available, highScore }
+  }
+
+  const stats = getVerificationStats()
 
   if (!isAuthenticated) {
     return (
@@ -133,12 +145,15 @@ const SearchPage: React.FC = () => {
               <div>
                 <h1 className="text-3xl font-bold text-text-primary mb-2">ReelCV Talent Search Results</h1>
                 <p className="text-text-secondary">
-                  {isLoading ? 'Searching...' : `Found ${searchResults.length} verified candidates from the ReelCV platform`}
+                  {isLoading ? 'Searching...' : error ? 'Search encountered an error' : `Found ${searchResults.length} verified candidates from the ReelCV platform`}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => setShowResults(false)}
+                  onClick={() => {
+                    setShowResults(false)
+                    setError(null)
+                  }}
                   className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200"
                 >
                   New Search
@@ -146,6 +161,22 @@ const SearchPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-red-500/20 rounded-lg">
+                    <Search className="w-6 h-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-400">Search Error</h3>
+                    <p className="text-red-300">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
@@ -153,20 +184,20 @@ const SearchPage: React.FC = () => {
                   <p className="text-text-muted">Searching for candidates...</p>
                 </div>
               </div>
-            ) : searchResults.length === 0 ? (
+            ) : !error && searchResults.length === 0 ? (
               <div className="text-center py-12">
                 <Search className="w-16 h-16 text-text-muted mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-text-primary mb-2">No candidates found</h3>
                 <p className="text-text-muted">Try adjusting your search criteria or filters</p>
               </div>
-            ) : (
+            ) : !error && searchResults.length > 0 ? (
               <>
                 {/* Quick Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="bg-background-panel border border-gray-600 rounded-xl p-6">
                     <div className="flex items-center space-x-3 mb-2">
                       <Shield className="w-6 h-6 text-green-400" />
-                      <span className="text-lg font-semibold text-text-primary">0</span>
+                      <span className="text-lg font-semibold text-text-primary">{stats.verified}</span>
                     </div>
                     <p className="text-text-muted">ReelPass Verified</p>
                   </div>
@@ -174,7 +205,7 @@ const SearchPage: React.FC = () => {
                   <div className="bg-background-panel border border-gray-600 rounded-xl p-6">
                     <div className="flex items-center space-x-3 mb-2">
                       <Clock className="w-6 h-6 text-blue-400" />
-                      <span className="text-lg font-semibold text-text-primary">0</span>
+                      <span className="text-lg font-semibold text-text-primary">{stats.available}</span>
                     </div>
                     <p className="text-text-muted">Available Now</p>
                   </div>
@@ -182,7 +213,7 @@ const SearchPage: React.FC = () => {
                   <div className="bg-background-panel border border-gray-600 rounded-xl p-6">
                     <div className="flex items-center space-x-3 mb-2">
                       <Star className="w-6 h-6 text-yellow-400" />
-                      <span className="text-lg font-semibold text-text-primary">0</span>
+                      <span className="text-lg font-semibold text-text-primary">{stats.highScore}</span>
                     </div>
                     <p className="text-text-muted">High ReelPass Score (80+)</p>
                   </div>
@@ -207,8 +238,17 @@ const SearchPage: React.FC = () => {
                     />
                   ))}
                 </div>
+
+                {/* Load More */}
+                {searchResults.length >= 50 && (
+                  <div className="text-center">
+                    <button className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl">
+                      Load More Candidates
+                    </button>
+                  </div>
+                )}
               </>
-            )}
+            ) : null}
           </>
         )}
       </div>

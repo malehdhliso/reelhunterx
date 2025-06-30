@@ -15,74 +15,102 @@ export type Database = {
       profiles: {
         Row: {
           id: string
+          user_id: string
           email: string
-          full_name: string
-          headline: string
-          reelpass_verified: boolean
+          first_name: string | null
+          last_name: string | null
+          headline: string | null
+          role: 'candidate' | 'recruiter'
+          completion_score: number | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
+          id?: string
+          user_id: string
           email: string
-          full_name: string
-          headline?: string
-          reelpass_verified?: boolean
+          first_name?: string | null
+          last_name?: string | null
+          headline?: string | null
+          role?: 'candidate' | 'recruiter'
+          completion_score?: number | null
         }
         Update: {
           email?: string
-          full_name?: string
-          headline?: string
-          reelpass_verified?: boolean
+          first_name?: string | null
+          last_name?: string | null
+          headline?: string | null
+          role?: 'candidate' | 'recruiter'
+          completion_score?: number | null
           updated_at?: string
-        }
-      }
-      projects: {
-        Row: {
-          id: string
-          candidate_id: string
-          title: string
-          description: string
-          tech_stack: string[]
-          demo_url?: string
-          github_url?: string
-          created_at: string
-        }
-        Insert: {
-          candidate_id: string
-          title: string
-          description: string
-          tech_stack: string[]
-          demo_url?: string
-          github_url?: string
-        }
-        Update: {
-          title?: string
-          description?: string
-          tech_stack?: string[]
-          demo_url?: string
-          github_url?: string
         }
       }
       skills: {
         Row: {
           id: string
-          candidate_id: string
-          skill_name: string
-          proficiency_level: number
+          profile_id: string
+          name: string
           verified: boolean
+          video_verified: boolean | null
+          video_demo_url: string | null
+          proficiency: string | null
           created_at: string
         }
         Insert: {
-          candidate_id: string
-          skill_name: string
-          proficiency_level: number
+          profile_id: string
+          name: string
           verified?: boolean
+          video_verified?: boolean | null
+          video_demo_url?: string | null
+          proficiency?: string | null
         }
         Update: {
-          skill_name?: string
-          proficiency_level?: number
+          name?: string
           verified?: boolean
+          video_verified?: boolean | null
+          video_demo_url?: string | null
+          proficiency?: string | null
+        }
+      }
+      availability_updates: {
+        Row: {
+          id: string
+          profile_id: string
+          availability_status: 'available' | 'open' | 'not-looking'
+          available_from: string | null
+          notice_period_days: number | null
+          salary_expectation_min: number | null
+          salary_expectation_max: number | null
+          preferred_work_type: string | null
+          location_preferences: string[] | null
+          notes: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          profile_id: string
+          availability_status: 'available' | 'open' | 'not-looking'
+          available_from?: string | null
+          notice_period_days?: number | null
+          salary_expectation_min?: number | null
+          salary_expectation_max?: number | null
+          preferred_work_type?: string | null
+          location_preferences?: string[] | null
+          notes?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          availability_status?: 'available' | 'open' | 'not-looking'
+          available_from?: string | null
+          notice_period_days?: number | null
+          salary_expectation_min?: number | null
+          salary_expectation_max?: number | null
+          preferred_work_type?: string | null
+          location_preferences?: string[] | null
+          notes?: string | null
+          is_active?: boolean
+          updated_at?: string
         }
       }
     }
