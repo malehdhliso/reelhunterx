@@ -31,10 +31,15 @@ export const useAuth = () => {
         console.log("Profile check result:", { profile, error })
         
         setIsEmployer(profile?.role === 'recruiter')
+      } else {
+        setSession(null)
+        setUser(null)
+        setIsEmployer(false)
       }
     } catch (error) {
       console.error('Error initializing auth:', error)
     } finally {
+      console.log("useAuth - initialize completed, setting isLoading to false")
       setIsLoading(false)
     }
   }, [])
@@ -65,6 +70,7 @@ export const useAuth = () => {
           setIsEmployer(false)
         }
         
+        console.log("Auth state change completed, setting isLoading to false")
         setIsLoading(false)
       }
     )
@@ -97,6 +103,13 @@ export const useAuth = () => {
   const getAccessToken = () => {
     return session?.access_token || null
   }
+
+  console.log("useAuth - Current state:", { 
+    isLoading, 
+    isAuthenticated: !!user, 
+    userId: user?.id,
+    isEmployer 
+  })
 
   return {
     user,

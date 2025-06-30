@@ -34,13 +34,17 @@ const DragDropPipeline: React.FC = () => {
   useEffect(() => {
     console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id })
     if (isAuthenticated && user) {
+      console.log("DragDropPipeline - Loading pipeline data for authenticated user")
       loadPipelineDataForUser()
+    } else {
+      console.log("DragDropPipeline - User not authenticated, setting loading to false")
+      setIsLoading(false)
     }
   }, [isAuthenticated, user])
 
   const loadPipelineDataForUser = async () => {
     try {
-      console.log("Loading pipeline data for user")
+      console.log("DragDropPipeline - Starting to load pipeline data for user:", user?.id)
       setIsLoading(true)
       
       // Get the user's profile to find their recruiter ID
@@ -51,22 +55,23 @@ const DragDropPipeline: React.FC = () => {
         .eq('role', 'recruiter')
         .single()
 
-      console.log("Profile query result:", { profile, error: profileError })
+      console.log("DragDropPipeline - Profile query result:", { profile, error: profileError })
 
       if (profileError || !profile) {
-        console.error('Failed to get recruiter profile:', profileError)
+        console.error('DragDropPipeline - Failed to get recruiter profile:', profileError)
         setStages([])
         return
       }
 
-      console.log("Calling loadPipelineData with profile ID:", profile.id)
+      console.log("DragDropPipeline - Calling loadPipelineData with profile ID:", profile.id)
       const pipelineData = await loadPipelineData(profile.id)
-      console.log("Pipeline data loaded:", pipelineData)
+      console.log("DragDropPipeline - Pipeline data loaded:", pipelineData)
       setStages(pipelineData)
     } catch (error) {
-      console.error('Failed to load pipeline data:', error)
+      console.error('DragDropPipeline - Failed to load pipeline data:', error)
       setStages([])
     } finally {
+      console.log("DragDropPipeline - Setting loading to false")
       setIsLoading(false)
     }
   }
@@ -344,6 +349,7 @@ const DragDropPipeline: React.FC = () => {
   }
 
   if (isLoading) {
+    console.log("DragDropPipeline - Rendering loading state")
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -354,7 +360,7 @@ const DragDropPipeline: React.FC = () => {
     )
   }
 
-  console.log("Rendering pipeline with stages:", stages)
+  console.log("DragDropPipeline - Rendering pipeline with stages:", stages.length)
 
   return (
     <div className="space-y-6">

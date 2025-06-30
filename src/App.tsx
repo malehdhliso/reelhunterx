@@ -7,12 +7,13 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import ScorecardsPage from './pages/ScorecardsPage'
 import MyStatsPage from './pages/MyStatsPage'
-import CandidateSetupPage from './pages/CandidateSetupPage'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import LoginManager from './components/auth/LoginManager'
 
 function App() {
   const { isLoading } = useAuth()
+
+  console.log("[App] Render", { isLoading })
 
   if (isLoading) {
     return (
@@ -36,7 +37,7 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/scorecards" element={<ScorecardsPage />} />
           <Route path="/my-stats" element={<MyStatsPage />} />
-          <Route path="/setup-profile" element={<CandidateSetupPage />} />
+          {/* Removed candidate setup route since this is for recruiters only */}
         </Routes>
       </Router>
       <LoginManager />
