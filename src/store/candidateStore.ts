@@ -1,131 +1,183 @@
 import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
-
-export interface Candidate {
-  id: string
-  full_name: string
-  headline: string
-  email: string
-  reelpass_verified: boolean
-  skills: string[]
-  projects: Project[]
-  match_score?: number
-  created_at: string
-}
-
-export interface Project {
-  id: string
-  title: string
-  description: string
-  tech_stack: string[]
-  demo_url?: string
-  github_url?: string
-}
+import { supabase } from '../services/supabase'
+import type { CandidateSearchResult, SearchFilters } from '../services/candidateService'
 
 interface CandidateStore {
-  candidates: Candidate[]
-  selectedCandidate: Candidate | null
-  searchResults: Candidate[]
+  candidates: CandidateSearchResult[]
+  selectedCandidate: CandidateSearchResult | null
+  searchResults: CandidateSearchResult[]
   isLoading: boolean
   error: string | null
   
   // Actions
   searchCandidates: (query: string, filters?: SearchFilters) => Promise<void>
-  selectCandidate: (candidate: Candidate) => void
+  selectCandidate: (candidate: CandidateSearchResult) => void
   clearSelection: () => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }
 
-export interface SearchFilters {
-  techStack?: string[]
-  experienceLevel?: string
-  reelpassOnly?: boolean
-}
+export const useCandidateStore = create<CandidateStore>()((set, get) => ({
+  candidates: [],
+  selectedCandidate: null,
+  searchResults: [],
+  isLoading: false,
+  error: null,
 
-export const useCandidateStore = create<CandidateStore>()(
-  devtools(
-    (set, get) => ({
-      candidates: [],
-      selectedCandidate: null,
-      searchResults: [],
-      isLoading: false,
-      error: null,
+  searchCandidates: async (query: string, filters?: SearchFilters) => {
+    set({ isLoading: true, error: null })
+    try {
+      // Use the live_candidate_availability view for optimized search
+      let queryBuilder = supabase
+        .from('live_candidate_availability')
+        .select('*')
 
-      searchCandidates: async (query: string, filters?: SearchFilters) => {
-        set({ isLoading: true, error: null })
-        try {
-          // TODO: Call Supabase Edge Function
-          await new Promise(resolve => setTimeout(resolve, 1500))
-          
-          // Mock data for now
-          const mockResults: Candidate[] = [
-            {
-              id: '1',
-              full_name: 'Sarah Chen',
-              headline: 'Senior Full-Stack Developer',
-              email: 'sarah.chen@example.com',
-              reelpass_verified: true,
-              skills: ['React', 'TypeScript', 'Node.js', 'PostgreSQL'],
-              projects: [
-                {
-                  id: '1',
-                  title: 'E-commerce Platform',
-                  description: 'Built a scalable e-commerce solution with React and Node.js',
-                  tech_stack: ['React', 'Node.js', 'PostgreSQL', 'Redis'],
-                  demo_url: 'https://demo.example.com',
-                  github_url: 'https://github.com/example/project'
-                }
-              ],
-              match_score: 92,
-              created_at: '2024-01-15T10:00:00Z'
-            },
-            {
-              id: '2',
-              full_name: 'Marcus Rodriguez',
-              headline: 'DevOps Engineer & Cloud Architect',
-              email: 'marcus.r@example.com',
-              reelpass_verified: true,
-              skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform'],
-              projects: [
-                {
-                  id: '2',
-                  title: 'Microservices Infrastructure',
-                  description: 'Designed and implemented cloud-native infrastructure',
-                  tech_stack: ['AWS', 'Docker', 'Kubernetes', 'Terraform'],
-                  demo_url: 'https://infra-demo.example.com'
-                }
-              ],
-              match_score: 87,
-              created_at: '2024-01-10T14:30:00Z'
-            }
-          ]
-          
-          set({ 
-            searchResults: mockResults,
-            isLoading: false 
-          })
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Search failed',
-            isLoading: false 
-          })
+      // Apply text search if query provided
+      if (query && query.trim()) {
+        queryBuilder = queryBuilder.or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,headline.ilike.%${query}%,email.ilike.%${query}%`)
+      }
+
+      // Apply ReelPass filter
+      if (filters?.reelPassOnly) {
+        queryBuilder = queryBuilder.gte('reelpass_score', 60)
+      }
+
+      // Apply availability filter
+      if (filters?.availability) {
+        const availabilityMap: Record<string, string> = {
+          'Available immediately': 'available',
+          'Available in 2 weeks': 'available',
+          'Available in 1 month': 'available',
+          'Open to opportunities': 'open'
         }
-      },
+        const status = availabilityMap[filters.availability]
+        if (status) {
+          queryBuilder = queryBuilder.eq('availability_status', status)
+        }
+      }
 
-      selectCandidate: (candidate) => {
-        set({ selectedCandidate: candidate })
-      },
+      // Apply salary filters
+      if (filters?.salaryMin) {
+        queryBuilder = queryBuilder.gte('salary_expectation_max', parseInt(filters.salaryMin))
+      }
+      if (filters?.salaryMax) {
+        queryBuilder = queryBuilder.lte('salary_expectation_min', parseInt(filters.salaryMax))
+      }
 
-      clearSelection: () => {
-        set({ selectedCandidate: null })
-      },
+      // Apply location filter
+      if (filters?.location) {
+        queryBuilder = queryBuilder.contains('location_preferences', [filters.location])
+      }
 
-      setLoading: (loading) => set({ isLoading: loading }),
-      setError: (error) => set({ error }),
-    }),
-    {
-      name: 'candidate-store',
+      // Apply province filter (SA specific)
+      if (filters?.province) {
+        queryBuilder = queryBuilder.eq('province', filters.province.toLowerCase().replace(' ', '_'))
+      }
+
+      // Apply BEE level filter (SA specific)
+      if (filters?.beeLevel) {
+        const beeLevel = filters.beeLevel.toLowerCase().replace(/\s+/g, '_')
+        queryBuilder = queryBuilder.eq('bee_status', beeLevel)
+      }
+
+      // Execute the query
+      const { data, error } = await queryBuilder.limit(50)
+
+      if (error) {
+        throw new Error(`Search failed: ${error.message}`)
+      }
+
+      if (!data) {
+        set({ searchResults: [], isLoading: false })
+        return
+      }
+
+      // Get skills for each candidate
+      const candidateIds = data.map(candidate => candidate.candidate_id)
+      const { data: skillsData } = await supabase
+        .from('skills')
+        .select('profile_id, name, verified')
+        .in('profile_id', candidateIds)
+
+      // Group skills by profile_id
+      const skillsByProfile = skillsData?.reduce((acc, skill) => {
+        if (!acc[skill.profile_id]) {
+          acc[skill.profile_id] = []
+        }
+        acc[skill.profile_id].push(skill.name)
+        return acc
+      }, {} as Record<string, string[]>) || {}
+
+      // Transform the data to match our interface
+      const candidates: CandidateSearchResult[] = data.map((candidate) => {
+        const skills = skillsByProfile[candidate.candidate_id] || []
+        
+        return {
+          id: candidate.candidate_id,
+          firstName: candidate.first_name || '',
+          lastName: candidate.last_name || '',
+          headline: candidate.headline || 'Professional',
+          email: candidate.email,
+          reelpassScore: candidate.reelpass_score || 0,
+          verificationStatus: candidate.verification_status,
+          availabilityStatus: candidate.availability_status || 'not-looking',
+          availableFrom: candidate.available_from || undefined,
+          noticePeriodDays: candidate.notice_period_days || undefined,
+          salaryExpectationMin: candidate.salary_expectation_min || undefined,
+          salaryExpectationMax: candidate.salary_expectation_max || undefined,
+          preferredWorkType: candidate.preferred_work_type || undefined,
+          locationPreferences: candidate.location_preferences || [],
+          skills,
+          lastActive: candidate.availability_updated_at || new Date().toISOString(),
+          currency: filters?.currency || 'USD',
+          province: candidate.province || undefined,
+          beeStatus: candidate.bee_status || undefined
+        }
+      })
+
+      // Apply skills filter (client-side for now)
+      let filteredCandidates = candidates
+      if (filters?.skills && filters.skills.length > 0) {
+        filteredCandidates = candidates.filter(candidate => 
+          filters.skills!.some(skill => 
+            candidate.skills.some(candidateSkill => 
+              candidateSkill.toLowerCase().includes(skill.toLowerCase())
+            )
+          )
+        )
+      }
+
+      // Apply languages filter (client-side for now)
+      if (filters?.languages && filters.languages.length > 0) {
+        filteredCandidates = filteredCandidates.filter(candidate => 
+          candidate.languages && 
+          filters.languages!.some(lang => 
+            candidate.languages!.includes(lang as any)
+          )
+        )
+      }
+
+      set({ 
+        searchResults: filteredCandidates,
+        isLoading: false 
+      })
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Search failed',
+        isLoading: false,
+        searchResults: []
+      })
     }
-  )
-)
+  },
+
+  selectCandidate: (candidate) => {
+    set({ selectedCandidate: candidate })
+  },
+
+  clearSelection: () => {
+    set({ selectedCandidate: null })
+  },
+
+  setLoading: (loading) => set({ isLoading: loading }),
+  setError: (error) => set({ error }),
+}))

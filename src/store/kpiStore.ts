@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
+import { supabase } from '../services/supabase'
 
 export interface KPIMetrics {
   timeToFill: number
@@ -40,63 +40,56 @@ const initialMetrics: KPIMetrics = {
   lastUpdated: new Date().toISOString(),
 }
 
-export const useKPIStore = create<KPIStore>()(
-  devtools(
-    (set, get) => ({
-      metrics: initialMetrics,
-      isLoading: false,
-      error: null,
+export const useKPIStore = create<KPIStore>()((set, get) => ({
+  metrics: initialMetrics,
+  isLoading: false,
+  error: null,
 
-      initializeMetrics: async () => {
-        set({ isLoading: true, error: null })
-        try {
-          // TODO: Fetch from Supabase or analytics service
-          // For now, using mock data
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          set({
-            metrics: {
-              ...initialMetrics,
-              timeToFill: 28,
-              costPerHire: 4500,
-              badHireRate: 12,
-              eeTargetRate: 85,
-              candidateNPS: 72,
-              hiringManagerNPS: 68,
-              crossoverRate: 15,
-              diversityRate: 42,
-              retentionRate: 88,
-              lastUpdated: new Date().toISOString(),
-            },
-            isLoading: false,
-          })
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to load metrics',
-            isLoading: false 
-          })
-        }
-      },
-
-      updateMetric: (key, value) => {
-        set((state) => ({
-          metrics: {
-            ...state.metrics,
-            [key]: value,
-            lastUpdated: new Date().toISOString(),
-          },
-        }))
-      },
-
-      refreshMetrics: async () => {
-        await get().initializeMetrics()
-      },
-
-      setLoading: (loading) => set({ isLoading: loading }),
-      setError: (error) => set({ error }),
-    }),
-    {
-      name: 'kpi-store',
+  initializeMetrics: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      // TODO: Implement actual metrics fetching from Supabase
+      // For now, using mock data
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      set({
+        metrics: {
+          ...initialMetrics,
+          timeToFill: 28,
+          costPerHire: 4500,
+          badHireRate: 12,
+          eeTargetRate: 85,
+          candidateNPS: 72,
+          hiringManagerNPS: 68,
+          crossoverRate: 15,
+          diversityRate: 42,
+          retentionRate: 88,
+          lastUpdated: new Date().toISOString(),
+        },
+        isLoading: false,
+      })
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to load metrics',
+        isLoading: false 
+      })
     }
-  )
-)
+  },
+
+  updateMetric: (key, value) => {
+    set((state) => ({
+      metrics: {
+        ...state.metrics,
+        [key]: value,
+        lastUpdated: new Date().toISOString(),
+      },
+    }))
+  },
+
+  refreshMetrics: async () => {
+    await get().initializeMetrics()
+  },
+
+  setLoading: (loading) => set({ isLoading: loading }),
+  setError: (error) => set({ error }),
+}))
