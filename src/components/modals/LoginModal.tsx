@@ -8,7 +8,7 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
-  const { signIn } = useAuth()
+  const { signIn, signUp } = useAuth()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -59,47 +59,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     try {
       setIsSubmitting(true)
       
-      // Import supabase here to avoid circular dependencies
-      const { supabase } = await import('../../services/supabase')
-      
-      // Sign up the user
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            full_name: `${firstName.trim()} ${lastName.trim()}`
-          }
-        }
+      // Use the signUp function from useAuth hook
+      await signUp(email, password, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim()
       })
 
-      if (signUpError) {
-        throw signUpError
-      }
-
-      if (data.user) {
-        // Create profile for the new user
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            email: email,
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            role: 'recruiter' // Default to recruiter for this platform
-          })
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError)
-          // Don't throw here as the user is already created
-        }
-
-        // Sign in the user automatically after successful signup
-        await signIn(email, password)
-        onClose?.()
-      }
+      // The signUp function should handle profile creation automatically
+      // If successful, sign in the user
+      await signIn(email, password)
+      onClose?.()
       
       setIsSubmitting(false)
     } catch (err: unknown) {

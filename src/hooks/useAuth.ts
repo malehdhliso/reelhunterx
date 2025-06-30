@@ -118,6 +118,7 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, userData?: { firstName?: string, lastName?: string }) => {
     console.log("Signing up with email:", email)
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -135,6 +136,41 @@ export const useAuth = () => {
     if (error) throw error
     
     console.log("Sign up successful:", data.user?.id)
+    
+    // If user is created, ensure profile exists
+    if (data.user) {
+      try {
+        // Check if profile already exists
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single()
+        
+        if (!existingProfile) {
+          // Create profile if it doesn't exist
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: data.user.id,
+              email: email,
+              first_name: userData?.firstName || '',
+              last_name: userData?.lastName || '',
+              role: 'recruiter' // Default to recruiter for this platform
+            })
+          
+          if (profileError) {
+            console.error('Error creating profile:', profileError)
+            // Don't throw here as the user is already created
+          } else {
+            console.log('Profile created successfully for user:', data.user.id)
+          }
+        }
+      } catch (profileError) {
+        console.error('Error handling profile creation:', profileError)
+      }
+    }
+    
     return data
   }
 
