@@ -7,8 +7,14 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEmployer, setIsEmployer] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
   const initialize = useCallback(async () => {
+    if (initialized) {
+      console.log("useAuth - Already initialized, skipping")
+      return
+    }
+
     try {
       console.log("useAuth - initialize called")
       setIsLoading(true)
@@ -36,19 +42,25 @@ export const useAuth = () => {
         setUser(null)
         setIsEmployer(false)
       }
+      
+      setInitialized(true)
     } catch (error) {
       console.error('Error initializing auth:', error)
+      setInitialized(true)
     } finally {
       console.log("useAuth - initialize completed, setting isLoading to false")
       setIsLoading(false)
     }
-  }, [])
+  }, [initialized])
 
   useEffect(() => {
-    console.log("useAuth - useEffect running")
-    initialize()
+    console.log("useAuth - useEffect running, initialized:", initialized)
     
-    // Set up auth state change listener
+    if (!initialized) {
+      initialize()
+    }
+    
+    // Set up auth state change listener only once
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state changed:", event, newSession ? "Session exists" : "No session")
@@ -108,7 +120,8 @@ export const useAuth = () => {
     isLoading, 
     isAuthenticated: !!user, 
     userId: user?.id,
-    isEmployer 
+    isEmployer,
+    initialized
   })
 
   return {

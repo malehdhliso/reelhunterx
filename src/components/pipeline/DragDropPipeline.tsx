@@ -13,7 +13,7 @@ interface MoveConfirmationModal {
 }
 
 const DragDropPipeline: React.FC = () => {
-  const { accessToken, isAuthenticated, user } = useAuth()
+  const { accessToken, isAuthenticated, user, isLoading: authLoading } = useAuth()
   
   const [stages, setStages] = useState<PipelineStageWithCandidates[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -32,7 +32,14 @@ const DragDropPipeline: React.FC = () => {
 
   // Load pipeline data on component mount
   useEffect(() => {
-    console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id })
+    console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id, authLoading })
+    
+    // Wait for auth to complete loading
+    if (authLoading) {
+      console.log("DragDropPipeline - Auth still loading, waiting...")
+      return
+    }
+    
     if (isAuthenticated && user) {
       console.log("DragDropPipeline - Loading pipeline data for authenticated user")
       loadPipelineDataForUser()
@@ -40,7 +47,7 @@ const DragDropPipeline: React.FC = () => {
       console.log("DragDropPipeline - User not authenticated, setting loading to false")
       setIsLoading(false)
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, authLoading])
 
   const loadPipelineDataForUser = async () => {
     try {
@@ -65,7 +72,7 @@ const DragDropPipeline: React.FC = () => {
 
       console.log("DragDropPipeline - Calling loadPipelineData with profile ID:", profile.id)
       const pipelineData = await loadPipelineData(profile.id)
-      console.log("DragDropPipeline - Pipeline data loaded:", pipelineData)
+      console.log("DragDropPipeline - Pipeline data loaded:", pipelineData.length, "stages")
       setStages(pipelineData)
     } catch (error) {
       console.error('DragDropPipeline - Failed to load pipeline data:', error)
@@ -332,7 +339,7 @@ const DragDropPipeline: React.FC = () => {
   }
 
   // Show authentication warning if not logged in
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
       <div className="space-y-6">
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-6">
@@ -348,7 +355,7 @@ const DragDropPipeline: React.FC = () => {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     console.log("DragDropPipeline - Rendering loading state")
     return (
       <div className="flex items-center justify-center py-12">
