@@ -1,26 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Star, MessageSquare, Award, Target, TrendingUp, Users, Filter, Search, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-
-interface RecruiterRating {
-  id: string
-  recruiterName: string
-  recruiterEmail: string
-  totalReviews: number
-  avgCommunication: number
-  avgProfessionalism: number
-  avgRoleAccuracy: number
-  overallRating: number
-  positiveReviews: number
-  negativeReviews: number
-  recentFeedback: Array<{
-    candidateName: string
-    jobTitle: string
-    rating: number
-    feedback: string
-    date: string
-  }>
-}
+import { getRecruiterRatings, type RecruiterRating } from '../../services/recruiterService'
 
 const RecruiterScorecard: React.FC = () => {
   const { isAuthenticated } = useAuth()
@@ -38,9 +19,8 @@ const RecruiterScorecard: React.FC = () => {
   const loadRecruiterRatings = async () => {
     try {
       setIsLoading(true)
-      // TODO: Implement actual API call to load recruiter ratings
-      // For now, show empty state
-      setRecruiters([])
+      const ratings = await getRecruiterRatings()
+      setRecruiters(ratings)
     } catch (error) {
       console.error('Failed to load recruiter ratings:', error)
     } finally {
@@ -260,7 +240,7 @@ const RecruiterScorecard: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium text-text-primary">
-                      {Math.round((recruiter.positiveReviews / recruiter.totalReviews) * 100)}% Positive
+                      {recruiter.totalReviews > 0 ? Math.round((recruiter.positiveReviews / recruiter.totalReviews) * 100) : 0}% Positive
                     </div>
                     <div className="text-xs text-text-muted">Recommendation Rate</div>
                   </div>

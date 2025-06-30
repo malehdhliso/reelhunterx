@@ -1,25 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Users, Plus, MoreVertical, Mail, Phone, MessageSquare, Calendar, Star, Clock, CheckCircle, AlertTriangle, X, XCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-
-interface PipelineStage {
-  id: string
-  name: string
-  order: number
-  color: string
-  autoEmailTemplate?: string
-  candidates: PipelineCandidate[]
-}
-
-interface PipelineCandidate {
-  id: string
-  name: string
-  email: string
-  avatar: string
-  addedAt: string
-  notes?: string
-  lastCommunication?: string
-}
+import { loadPipelineData, moveCandidateToStage, type PipelineStageWithCandidates, type PipelineCandidate } from '../../services/pipelineService'
 
 interface MoveConfirmationModal {
   isOpen: boolean
@@ -32,7 +14,7 @@ interface MoveConfirmationModal {
 const DragDropPipeline: React.FC = () => {
   const { accessToken, isAuthenticated, user } = useAuth()
   
-  const [stages, setStages] = useState<PipelineStage[]>([])
+  const [stages, setStages] = useState<PipelineStageWithCandidates[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [draggedCandidate, setDraggedCandidate] = useState<PipelineCandidate | null>(null)
   const [draggedFromStage, setDraggedFromStage] = useState<string | null>(null)
@@ -49,78 +31,34 @@ const DragDropPipeline: React.FC = () => {
 
   // Load pipeline data on component mount
   useEffect(() => {
-    if (isAuthenticated) {
-      loadPipelineData()
+    if (isAuthenticated && user) {
+      loadPipelineDataForUser()
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user])
 
-  const loadPipelineData = async () => {
+  const loadPipelineDataForUser = async () => {
     try {
       setIsLoading(true)
-      // TODO: Implement actual API call to load pipeline stages and candidates
-      // For now, create empty default stages
-      const defaultStages: PipelineStage[] = [
-        {
-          id: '1',
-          name: 'Applied',
-          order: 1,
-          color: '#3b82f6',
-          autoEmailTemplate: 'Thank you for your application. We have received your profile and will review it shortly.',
-          candidates: []
-        },
-        {
-          id: '2',
-          name: 'Screening',
-          order: 2,
-          color: '#f59e0b',
-          autoEmailTemplate: 'Congratulations! Your profile has passed our initial review. We would like to schedule a screening call with you.',
-          candidates: []
-        },
-        {
-          id: '3',
-          name: 'Interview',
-          order: 3,
-          color: '#8b5cf6',
-          autoEmailTemplate: 'Great news! We would like to invite you for an interview. Please let us know your availability for the coming week.',
-          candidates: []
-        },
-        {
-          id: '4',
-          name: 'Final Review',
-          order: 4,
-          color: '#f97316',
-          autoEmailTemplate: 'You have progressed to our final review stage. We will be in touch with next steps within 2-3 business days.',
-          candidates: []
-        },
-        {
-          id: '5',
-          name: 'Offer',
-          order: 5,
-          color: '#10b981',
-          autoEmailTemplate: 'Excellent! We are pleased to extend you an offer. Please review the attached details and let us know if you have any questions.',
-          candidates: []
-        },
-        {
-          id: '6',
-          name: 'Hired',
-          order: 6,
-          color: '#059669',
-          autoEmailTemplate: 'Welcome to the team! We are excited to have you on board. HR will be in touch with onboarding details.',
-          candidates: []
-        },
-        {
-          id: '7',
-          name: 'Rejected',
-          order: 7,
-          color: '#ef4444',
-          autoEmailTemplate: 'Thank you for your time and interest in our company. While we will not be moving forward with your application at this time, we encourage you to apply for future opportunities that match your skills.',
-          candidates: []
-        }
-      ]
       
-      setStages(defaultStages)
+      // Get the user's profile to find their recruiter ID
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('role', 'recruiter')
+        .single()
+
+      if (profileError || !profile) {
+        console.error('Failed to get recruiter profile:', profileError)
+        setStages([])
+        return
+      }
+
+      const pipelineData = await loadPipelineData(profile.id)
+      setStages(pipelineData)
     } catch (error) {
       console.error('Failed to load pipeline data:', error)
+      setStages([])
     } finally {
       setIsLoading(false)
     }
@@ -154,9 +92,9 @@ const DragDropPipeline: React.FC = () => {
     setMoveConfirmation({
       isOpen: true,
       candidate: draggedCandidate,
-      fromStage: fromStage.name,
-      toStage: toStage.name,
-      emailTemplate: toStage.autoEmailTemplate || ''
+      fromStage: fromStage.stage_name,
+      toStage: toStage.stage_name,
+      emailTemplate: toStage.auto_email_template || ''
     })
     setCandidateEmail(draggedCandidate.email)
     setEmailError('')
@@ -237,68 +175,94 @@ const DragDropPipeline: React.FC = () => {
     }
 
     // Check authentication before proceeding
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated || !accessToken || !user) {
       setEmailError('You must be logged in to move candidates')
       return
     }
 
-    // Perform the move
-    const targetStageId = stages.find(s => s.name === moveConfirmation.toStage)?.id
-    
-    if (!targetStageId || !draggedCandidate || !draggedFromStage) return
+    try {
+      // Get the user's profile to find their recruiter ID
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('role', 'recruiter')
+        .single()
 
-    setStages(prevStages => {
-      const newStages = prevStages.map(stage => {
-        if (stage.id === draggedFromStage) {
-          return {
-            ...stage,
-            candidates: stage.candidates.filter(c => c.id !== draggedCandidate.id)
-          }
-        }
-        if (stage.id === targetStageId) {
-          return {
-            ...stage,
-            candidates: [...stage.candidates, {
-              ...draggedCandidate,
-              lastCommunication: new Date().toISOString()
-            }]
-          }
-        }
-        return stage
-      })
-      return newStages
-    })
+      if (profileError || !profile) {
+        setEmailError('Failed to get recruiter profile')
+        return
+      }
 
-    // Send email if template exists
-    if (moveConfirmation.emailTemplate && moveConfirmation.candidate) {
-      const emailSent = await sendPipelineEmail(
-        candidateEmail,
-        `Application Update: ${moveConfirmation.toStage}`,
-        moveConfirmation.emailTemplate,
-        moveConfirmation.candidate.name,
-        moveConfirmation.toStage
+      // Perform the move
+      const targetStageId = stages.find(s => s.stage_name === moveConfirmation.toStage)?.id
+      
+      if (!targetStageId || !draggedCandidate || !draggedFromStage) return
+
+      await moveCandidateToStage(
+        draggedCandidate.id,
+        draggedFromStage,
+        targetStageId,
+        profile.id
       )
 
-      if (emailSent) {
-        showNotification(
-          `✅ Candidate moved successfully`,
-          `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage} - Professional email sent`
+      // Update local state
+      setStages(prevStages => {
+        const newStages = prevStages.map(stage => {
+          if (stage.id === draggedFromStage) {
+            return {
+              ...stage,
+              candidates: stage.candidates.filter(c => c.id !== draggedCandidate.id)
+            }
+          }
+          if (stage.id === targetStageId) {
+            return {
+              ...stage,
+              candidates: [...stage.candidates, {
+                ...draggedCandidate,
+                lastCommunication: new Date().toISOString()
+              }]
+            }
+          }
+          return stage
+        })
+        return newStages
+      })
+
+      // Send email if template exists
+      if (moveConfirmation.emailTemplate && moveConfirmation.candidate) {
+        const emailSent = await sendPipelineEmail(
+          candidateEmail,
+          `Application Update: ${moveConfirmation.toStage}`,
+          moveConfirmation.emailTemplate,
+          moveConfirmation.candidate.name,
+          moveConfirmation.toStage
         )
+
+        if (emailSent) {
+          showNotification(
+            `✅ Candidate moved successfully`,
+            `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage} - Professional email sent`
+          )
+        } else {
+          showNotification(
+            `⚠️ Candidate moved with email warning`,
+            `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage} - Email delivery failed, please follow up manually`
+          )
+        }
       } else {
         showNotification(
-          `⚠️ Candidate moved with email warning`,
-          `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage} - Email delivery failed, please follow up manually`
+          `✅ Candidate moved successfully`,
+          `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage}`
         )
       }
-    } else {
-      showNotification(
-        `✅ Candidate moved successfully`,
-        `${moveConfirmation.candidate?.name} moved to ${moveConfirmation.toStage}`
-      )
-    }
 
-    // Reset state
-    closeMoveConfirmation()
+      // Reset state
+      closeMoveConfirmation()
+    } catch (error) {
+      console.error('Error moving candidate:', error)
+      setEmailError('Failed to move candidate. Please try again.')
+    }
   }
 
   const closeMoveConfirmation = () => {
@@ -410,11 +374,11 @@ const DragDropPipeline: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <div 
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: stage.color }}
+                    style={{ backgroundColor: stage.stage_color }}
                   />
                   <div className="flex items-center space-x-2">
-                    {getStageIcon(stage.name)}
-                    <h3 className="font-semibold text-text-primary">{stage.name}</h3>
+                    {getStageIcon(stage.stage_name)}
+                    <h3 className="font-semibold text-text-primary">{stage.stage_name}</h3>
                   </div>
                   <span className="bg-background-card text-text-muted px-2 py-1 rounded-full text-sm">
                     {stage.candidates.length}
@@ -425,7 +389,7 @@ const DragDropPipeline: React.FC = () => {
                 </button>
               </div>
               
-              {stage.autoEmailTemplate && (
+              {stage.auto_email_template && (
                 <div className="flex items-center space-x-2 text-xs text-text-muted">
                   <Mail className="w-3 h-3" />
                   <span>Auto-email enabled</span>
@@ -486,7 +450,7 @@ const DragDropPipeline: React.FC = () => {
               
               {stage.candidates.length === 0 && (
                 <div className="text-center py-8 text-text-muted">
-                  {getStageIcon(stage.name)}
+                  {getStageIcon(stage.stage_name)}
                   <div className="mt-2">
                     <p className="text-sm">No candidates in this stage</p>
                     <p className="text-xs">Drag ReelCV candidates here to move them</p>
