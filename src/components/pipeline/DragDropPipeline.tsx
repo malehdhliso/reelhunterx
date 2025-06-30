@@ -30,92 +30,10 @@ interface MoveConfirmationModal {
 }
 
 const DragDropPipeline: React.FC = () => {
-  const { accessToken, isAuthenticated } = useAuth()
+  const { accessToken, isAuthenticated, user } = useAuth()
   
-  const [stages, setStages] = useState<PipelineStage[]>([
-    {
-      id: '1',
-      name: 'Applied',
-      order: 1,
-      color: '#3b82f6',
-      autoEmailTemplate: 'Thank you for your application. We have received your profile and will review it shortly.',
-      candidates: [
-        {
-          id: '1',
-          name: 'Sarah Chen',
-          email: 'sarah.chen@example.com',
-          avatar: 'SC',
-          addedAt: '2024-01-15T10:00:00Z',
-          notes: 'Strong React background'
-        },
-        {
-          id: '2',
-          name: 'Marcus Rodriguez',
-          email: 'marcus.r@example.com',
-          avatar: 'MR',
-          addedAt: '2024-01-14T15:30:00Z'
-        }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Screening',
-      order: 2,
-      color: '#f59e0b',
-      autoEmailTemplate: 'Congratulations! Your profile has passed our initial review. We would like to schedule a screening call with you.',
-      candidates: [
-        {
-          id: '3',
-          name: 'Priya Patel',
-          email: 'priya.patel@example.com',
-          avatar: 'PP',
-          addedAt: '2024-01-13T09:15:00Z',
-          lastCommunication: '2024-01-13T14:00:00Z'
-        }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Interview',
-      order: 3,
-      color: '#8b5cf6',
-      autoEmailTemplate: 'Great news! We would like to invite you for an interview. Please let us know your availability for the coming week.',
-      candidates: []
-    },
-    {
-      id: '4',
-      name: 'Final Review',
-      order: 4,
-      color: '#f97316',
-      autoEmailTemplate: 'You have progressed to our final review stage. We will be in touch with next steps within 2-3 business days.',
-      candidates: []
-    },
-    {
-      id: '5',
-      name: 'Offer',
-      order: 5,
-      color: '#10b981',
-      autoEmailTemplate: 'Excellent! We are pleased to extend you an offer. Please review the attached details and let us know if you have any questions.',
-      candidates: []
-    },
-    {
-      id: '6',
-      name: 'Hired',
-      order: 6,
-      color: '#059669',
-      autoEmailTemplate: 'Welcome to the team! We are excited to have you on board. HR will be in touch with onboarding details.',
-      candidates: []
-    },
-    {
-      id: '7',
-      name: 'Rejected',
-      order: 7,
-      color: '#ef4444',
-      autoEmailTemplate: 'Thank you for your time and interest in our company. While we will not be moving forward with your application at this time, we encourage you to apply for future opportunities that match your skills.',
-      candidates: []
-    }
-  ])
-
+  const [stages, setStages] = useState<PipelineStage[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [draggedCandidate, setDraggedCandidate] = useState<PipelineCandidate | null>(null)
   const [draggedFromStage, setDraggedFromStage] = useState<string | null>(null)
   const [moveConfirmation, setMoveConfirmation] = useState<MoveConfirmationModal>({
@@ -128,6 +46,85 @@ const DragDropPipeline: React.FC = () => {
   const [candidateEmail, setCandidateEmail] = useState('')
   const [emailError, setEmailError] = useState('')
   const [isEmailSending, setIsEmailSending] = useState(false)
+
+  // Load pipeline data on component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadPipelineData()
+    }
+  }, [isAuthenticated])
+
+  const loadPipelineData = async () => {
+    try {
+      setIsLoading(true)
+      // TODO: Implement actual API call to load pipeline stages and candidates
+      // For now, create empty default stages
+      const defaultStages: PipelineStage[] = [
+        {
+          id: '1',
+          name: 'Applied',
+          order: 1,
+          color: '#3b82f6',
+          autoEmailTemplate: 'Thank you for your application. We have received your profile and will review it shortly.',
+          candidates: []
+        },
+        {
+          id: '2',
+          name: 'Screening',
+          order: 2,
+          color: '#f59e0b',
+          autoEmailTemplate: 'Congratulations! Your profile has passed our initial review. We would like to schedule a screening call with you.',
+          candidates: []
+        },
+        {
+          id: '3',
+          name: 'Interview',
+          order: 3,
+          color: '#8b5cf6',
+          autoEmailTemplate: 'Great news! We would like to invite you for an interview. Please let us know your availability for the coming week.',
+          candidates: []
+        },
+        {
+          id: '4',
+          name: 'Final Review',
+          order: 4,
+          color: '#f97316',
+          autoEmailTemplate: 'You have progressed to our final review stage. We will be in touch with next steps within 2-3 business days.',
+          candidates: []
+        },
+        {
+          id: '5',
+          name: 'Offer',
+          order: 5,
+          color: '#10b981',
+          autoEmailTemplate: 'Excellent! We are pleased to extend you an offer. Please review the attached details and let us know if you have any questions.',
+          candidates: []
+        },
+        {
+          id: '6',
+          name: 'Hired',
+          order: 6,
+          color: '#059669',
+          autoEmailTemplate: 'Welcome to the team! We are excited to have you on board. HR will be in touch with onboarding details.',
+          candidates: []
+        },
+        {
+          id: '7',
+          name: 'Rejected',
+          order: 7,
+          color: '#ef4444',
+          autoEmailTemplate: 'Thank you for your time and interest in our company. While we will not be moving forward with your application at this time, we encourage you to apply for future opportunities that match your skills.',
+          candidates: []
+        }
+      ]
+      
+      setStages(defaultStages)
+    } catch (error) {
+      console.error('Failed to load pipeline data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleDragStart = (candidate: PipelineCandidate, stageId: string) => {
     setDraggedCandidate(candidate)
@@ -199,8 +196,8 @@ const DragDropPipeline: React.FC = () => {
           stageName,
           subject,
           message,
-          recruiterName: 'John Doe', // TODO: Get from auth context
-          companyName: 'ReelHunter' // TODO: Get from profile
+          recruiterName: user?.user_metadata?.full_name || 'ReelHunter Team',
+          companyName: user?.user_metadata?.company || 'ReelHunter'
         })
       })
 
@@ -370,6 +367,17 @@ const DragDropPipeline: React.FC = () => {
               <p className="text-yellow-300">Please log in to access the candidate pipeline.</p>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-text-muted">Loading pipeline...</p>
         </div>
       </div>
     )
@@ -649,33 +657,17 @@ const DragDropPipeline: React.FC = () => {
         </div>
       )}
 
-      {/* Communication Log */}
-      <div className="bg-background-panel border border-gray-600 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-text-primary mb-4">Recent Communications</h3>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-4 p-3 bg-background-card rounded-lg">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-text-primary">Professional email sent to Sarah Chen</p>
-              <p className="text-xs text-text-muted">Moved to Screening • Email delivery confirmed • Email verified: sarah.chen@example.com</p>
-            </div>
-            <span className="text-xs text-text-muted">2 min ago</span>
-          </div>
-          
-          <div className="flex items-center space-x-4 p-3 bg-background-card rounded-lg">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Mail className="w-4 h-4 text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-text-primary">Professional email sent to Marcus Rodriguez</p>
-              <p className="text-xs text-text-muted">Moved to Interview • Email delivery confirmed • Email verified: marcus.r@example.com</p>
-            </div>
-            <span className="text-xs text-text-muted">1 hour ago</span>
-          </div>
+      {/* Empty State */}
+      {getTotalCandidates() === 0 && (
+        <div className="bg-background-panel border border-gray-600 rounded-xl p-12 text-center">
+          <Users className="w-16 h-16 text-text-muted mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-text-primary mb-2">No candidates in pipeline</h3>
+          <p className="text-text-muted mb-6">Start by searching for candidates and adding them to your pipeline</p>
+          <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200">
+            Search Candidates
+          </button>
         </div>
-      </div>
+      )}
     </div>
   )
 }

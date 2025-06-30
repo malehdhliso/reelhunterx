@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import DashboardLayout from '../components/layout/DashboardLayout'
-import { BarChart3, TrendingUp, TrendingDown, Users, Clock, DollarSign, Target, Calendar, Filter, Download } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Users, Clock, DollarSign, Target, Calendar, Filter, Download, AlertTriangle } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
 
 interface MetricCard {
   title: string
@@ -11,38 +12,58 @@ interface MetricCard {
 }
 
 const AnalyticsPage: React.FC = () => {
+  const { isAuthenticated } = useAuth()
   const [timeRange, setTimeRange] = useState('30d')
+  const [metrics, setMetrics] = useState<MetricCard[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const metrics: MetricCard[] = [
-    {
-      title: 'Time to Fill',
-      value: '--',
-      change: '--',
-      trend: 'neutral',
-      icon: <Clock className="w-6 h-6" />
-    },
-    {
-      title: 'Cost per Hire',
-      value: '--',
-      change: '--',
-      trend: 'neutral',
-      icon: <DollarSign className="w-6 h-6" />
-    },
-    {
-      title: 'Active Candidates',
-      value: '--',
-      change: '--',
-      trend: 'neutral',
-      icon: <Users className="w-6 h-6" />
-    },
-    {
-      title: 'Hire Rate',
-      value: '--',
-      change: '--',
-      trend: 'neutral',
-      icon: <Target className="w-6 h-6" />
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAnalyticsData()
     }
-  ]
+  }, [isAuthenticated, timeRange])
+
+  const loadAnalyticsData = async () => {
+    try {
+      setIsLoading(true)
+      // TODO: Implement actual analytics API call
+      // For now, show empty metrics
+      setMetrics([
+        {
+          title: 'Time to Fill',
+          value: '--',
+          change: '--',
+          trend: 'neutral',
+          icon: <Clock className="w-6 h-6" />
+        },
+        {
+          title: 'Cost per Hire',
+          value: '--',
+          change: '--',
+          trend: 'neutral',
+          icon: <DollarSign className="w-6 h-6" />
+        },
+        {
+          title: 'Active Candidates',
+          value: '--',
+          change: '--',
+          trend: 'neutral',
+          icon: <Users className="w-6 h-6" />
+        },
+        {
+          title: 'Hire Rate',
+          value: '--',
+          change: '--',
+          trend: 'neutral',
+          icon: <Target className="w-6 h-6" />
+        }
+      ])
+    } catch (error) {
+      console.error('Failed to load analytics data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const timeRanges = [
     { value: '7d', label: 'Last 7 days' },
@@ -65,6 +86,35 @@ const AnalyticsPage: React.FC = () => {
       case 'down': return 'text-red-400'
       default: return 'text-text-muted'
     }
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <AlertTriangle className="w-16 h-16 text-text-muted mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-text-primary mb-2">Authentication Required</h2>
+              <p className="text-text-muted">Please log in to view your analytics dashboard.</p>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p className="text-text-muted">Loading analytics...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
