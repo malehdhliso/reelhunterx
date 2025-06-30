@@ -12,7 +12,10 @@ import LoadingSpinner from './components/common/LoadingSpinner'
 import LoginManager from './components/auth/LoginManager'
 
 function App() {
-  const { isLoading } = useAuth()
+  const { isLoading, user, session, isAuthenticated } = useAuth()
+
+  // Debug logs to trace authentication/loading flow
+  console.log('[App] Render', { isLoading, isAuthenticated, user, session })
 
   if (isLoading) {
     return (

@@ -20,6 +20,9 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     white: 'text-white'
   }
 
+  // Debug: Log spinner render details
+  console.log('[LoadingSpinner] Render', { size, color })
+
   return (
     <div className="flex items-center justify-center">
       <div className={`
