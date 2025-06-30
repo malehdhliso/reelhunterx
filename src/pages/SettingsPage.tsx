@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
-import DashboardLayout from '../components/layout/DashboardLayout'
-import ReelPassDashboard from '../components/reelpass/ReelPassDashboard'
-import { Settings, User, Bell, Shield, CreditCard, Users, Mail, Globe, Palette, Database, Key, HelpCircle, ChevronDown, Save, X, Eye, EyeOff, BarChart3 } from 'lucide-react'
+import React, { useState } from 'react';
+import DashboardLayout from '../components/layout/DashboardLayout';
+
+import { User, Bell, Shield, CreditCard, Users, Database, ChevronDown, Save, X, BarChart3 } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('profile')
-  const [hasChanges, setHasChanges] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile');
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Profile settings state
   const [profileData, setProfileData] = useState({
@@ -20,7 +20,7 @@ const SettingsPage: React.FC = () => {
     timezone: '',
     currency: '',
     language: ''
-  })
+  });
 
   // Notification settings state
   const [notificationSettings, setNotificationSettings] = useState({
@@ -32,7 +32,7 @@ const SettingsPage: React.FC = () => {
     emailDigest: true,
     pushNotifications: false,
     smsNotifications: false
-  })
+  });
 
   // Security settings state
   const [securitySettings, setSecuritySettings] = useState({
@@ -41,7 +41,7 @@ const SettingsPage: React.FC = () => {
     loginAlerts: true,
     dataExportEnabled: true,
     apiAccessEnabled: false
-  })
+  });
 
   // Team settings state
   const [teamSettings, setTeamSettings] = useState({
@@ -50,7 +50,7 @@ const SettingsPage: React.FC = () => {
     defaultRole: 'recruiter',
     requireApproval: true,
     shareAnalytics: true
-  })
+  });
 
   // Integration settings state
   const [integrationSettings, setIntegrationSettings] = useState({
@@ -59,7 +59,7 @@ const SettingsPage: React.FC = () => {
     crmIntegration: false,
     slackNotifications: false,
     webhooksEnabled: false
-  })
+  });
 
   // Privacy & Stats settings state
   const [privacySettings, setPrivacySettings] = useState({
@@ -69,18 +69,17 @@ const SettingsPage: React.FC = () => {
     sharePerformanceData: false,
     allowCandidateRatings: true,
     publicProfileVisible: true
-  })
+  });
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
-    { id: 'reelpass', label: 'ReelPass', icon: <Shield className="w-5 h-5" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
     { id: 'security', label: 'Security', icon: <Shield className="w-5 h-5" /> },
     { id: 'privacy', label: 'Privacy & Stats', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'billing', label: 'Billing', icon: <CreditCard className="w-5 h-5" /> },
     { id: 'team', label: 'Team', icon: <Users className="w-5 h-5" /> },
     { id: 'integrations', label: 'Integrations', icon: <Database className="w-5 h-5" /> }
-  ]
+  ];
 
   const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -93,12 +92,12 @@ const SettingsPage: React.FC = () => {
     { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
     { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
     { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' }
-  ]
+  ];
 
   const timezones = [
     'America/New_York',
     'America/Chicago',
-    'America/Denver', 
+    'America/Denver',
     'America/Los_Angeles',
     'Europe/London',
     'Europe/Paris',
@@ -108,7 +107,7 @@ const SettingsPage: React.FC = () => {
     'Asia/Kolkata',
     'Australia/Sydney',
     'Africa/Johannesburg'
-  ]
+  ];
 
   const industries = [
     'Technology',
@@ -121,59 +120,59 @@ const SettingsPage: React.FC = () => {
     'Consulting',
     'Media & Entertainment',
     'Other'
-  ]
+  ];
 
   const handleProfileChange = (field: string, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }))
-    setHasChanges(true)
-  }
+    setProfileData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
 
   const handleNotificationChange = (setting: string, value: boolean) => {
-    setNotificationSettings(prev => ({ ...prev, [setting]: value }))
-    setHasChanges(true)
-  }
+    setNotificationSettings(prev => ({ ...prev, [setting]: value }));
+    setHasChanges(true);
+  };
 
   const handleSecurityChange = (setting: string, value: string | boolean) => {
-    setSecuritySettings(prev => ({ ...prev, [setting]: value }))
-    setHasChanges(true)
-  }
+    setSecuritySettings(prev => ({ ...prev, [setting]: value }));
+    setHasChanges(true);
+  };
 
   const handleTeamChange = (setting: string, value: string | boolean) => {
-    setTeamSettings(prev => ({ ...prev, [setting]: value }))
-    setHasChanges(true)
-  }
+    setTeamSettings(prev => ({ ...prev, [setting]: value }));
+    setHasChanges(true);
+  };
 
   const handleIntegrationChange = (setting: string, value: string | boolean) => {
-    setIntegrationSettings(prev => ({ ...prev, [setting]: value }))
-    setHasChanges(true)
-  }
+    setIntegrationSettings(prev => ({ ...prev, [setting]: value }));
+    setHasChanges(true);
+  };
 
   const handlePrivacyChange = (setting: string, value: boolean) => {
-    setPrivacySettings(prev => ({ ...prev, [setting]: value }))
-    setHasChanges(true)
-  }
+    setPrivacySettings(prev => ({ ...prev, [setting]: value }));
+    setHasChanges(true);
+  };
 
   const handleSave = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setIsSaving(false)
-    setHasChanges(false)
-    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsSaving(false);
+    setHasChanges(false);
+
     // Show success notification
-    const notification = document.createElement('div')
-    notification.className = 'fixed top-4 right-4 bg-primary-500 text-white p-4 rounded-lg shadow-lg z-50'
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-primary-500 text-white p-4 rounded-lg shadow-lg z-50';
     notification.innerHTML = `
       <div class="flex items-center space-x-2">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
         </svg>
         <span>Settings saved successfully!</span>
       </div>
-    `
-    document.body.appendChild(notification)
-    setTimeout(() => notification.remove(), 3000)
-  }
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -221,7 +220,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold text-text-primary mb-4">Company Information</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -273,7 +272,7 @@ const SettingsPage: React.FC = () => {
                       className="w-full px-4 py-3 bg-background-card border border-gray-600 rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
                     >
                       {timezones.map(tz => (
-                        <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
+                        <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
@@ -318,10 +317,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
-
-      case 'reelpass':
-        return <ReelPassDashboard />
+        );
 
       case 'notifications':
         return (
@@ -344,10 +340,10 @@ const SettingsPage: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-background-card rounded-xl border border-gray-600">
                   <div>
-                    <h4 className="font-medium text-text-primary">ReelPass Verifications</h4>
+                    <h4 className="font-medium text-text-primary">Verification Updates</h4>
                     <p className="text-sm text-text-muted">Updates on verification status changes</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -360,7 +356,7 @@ const SettingsPage: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-background-card rounded-xl border border-gray-600">
                   <div>
                     <h4 className="font-medium text-text-primary">Interview Reminders</h4>
@@ -376,7 +372,7 @@ const SettingsPage: React.FC = () => {
                     <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                   </label>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 bg-background-card rounded-xl border border-gray-600">
                   <div>
                     <h4 className="font-medium text-text-primary">Weekly Reports</h4>
@@ -427,7 +423,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case 'security':
         return (
@@ -480,7 +476,7 @@ const SettingsPage: React.FC = () => {
                         <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">Login Alerts</h5>
@@ -517,7 +513,7 @@ const SettingsPage: React.FC = () => {
                         <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">API Access</h5>
@@ -538,7 +534,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case 'privacy':
         return (
@@ -654,7 +650,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case 'billing':
         return (
@@ -673,7 +669,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case 'team':
         return (
@@ -711,7 +707,7 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -728,7 +724,7 @@ const SettingsPage: React.FC = () => {
                         <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">Share Analytics</h5>
@@ -760,7 +756,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case 'integrations':
         return (
@@ -787,7 +783,7 @@ const SettingsPage: React.FC = () => {
                         <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">Calendar Sync</h5>
@@ -824,7 +820,7 @@ const SettingsPage: React.FC = () => {
                         <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">Slack Notifications</h5>
@@ -840,7 +836,7 @@ const SettingsPage: React.FC = () => {
                         <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h5 className="font-medium text-text-primary">Webhooks</h5>
@@ -861,12 +857,12 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <DashboardLayout>
@@ -885,11 +881,10 @@ const SettingsPage: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      activeTab === tab.id
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === tab.id
                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                         : 'text-text-secondary hover:text-text-primary hover:bg-background-card'
-                    }`}
+                      }`}
                   >
                     {tab.icon}
                     <span className="font-medium">{tab.label}</span>
@@ -901,54 +896,49 @@ const SettingsPage: React.FC = () => {
 
           {/* Content */}
           <div className="flex-1">
-            {activeTab === 'reelpass' ? (
-              <ReelPassDashboard />
-            ) : (
-              <div className="bg-background-panel border border-gray-600 rounded-xl p-8">
-                {renderTabContent()}
-                
-                {/* Save Button - only show for non-reelpass tabs */}
-                {hasChanges && (
-                  <div className="flex justify-end pt-8 border-t border-gray-600 mt-8">
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => {
-                          setHasChanges(false)
-                          // Reset to original values
-                          window.location.reload()
-                        }}
-                        className="px-6 py-3 text-text-secondary hover:text-text-primary transition-colors duration-200 flex items-center space-x-2"
-                      >
-                        <X className="w-4 h-4" />
-                        <span>Cancel</span>
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition-colors duration-200 flex items-center space-x-2 disabled:cursor-not-allowed"
-                      >
-                        {isSaving ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Saving...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-4 h-4" />
-                            <span>Save Changes</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+            <div className="bg-background-panel border border-gray-600 rounded-xl p-8">
+              {renderTabContent()}
+
+              {hasChanges && (
+                <div className="flex justify-end pt-8 border-t border-gray-600 mt-8">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => {
+                        setHasChanges(false);
+                        // Reset to original values by reloading the page
+                        window.location.reload();
+                      }}
+                      className="px-6 py-3 text-text-secondary hover:text-text-primary transition-colors duration-200 flex items-center space-x-2"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition-colors duration-200 flex items-center space-x-2 disabled:cursor-not-allowed"
+                    >
+                      {isSaving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Save Changes</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </DashboardLayout>
-  )
-}
+  );
+};
 
-export default SettingsPage
+export default SettingsPage;

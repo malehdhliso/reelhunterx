@@ -4,7 +4,7 @@ src/components/scorecards/RecruiterScorecard.tsx: This component contains the UI
 src/App.tsx: This file defines the route (/scorecards) that links to the ScorecardsPage.
 src/components/layout/DashboardLayout.tsx: This file includes the navigation item for "Recruiter Scorecards" in the sidebar, allowing users to access the page.
 Database Schema (recruiter_scorecards table and recruiter_ratings_summary view): These define the data structure for storing and summarizing recruiter ratings.
-ReelPass
+
 src/components/reelpass/ReelPassDashboard.tsx: This is the primary component that displays the ReelPass verification status, scoring breakdown, and verification categories.
 src/pages/SettingsPage.tsx: The ReelPass dashboard is integrated as a tab within the Settings page, allowing users to view and manage their verification status.
 src/components/candidates/CandidateCard.tsx: This component displays the ReelPass score and verification status for individual candidates in search results.

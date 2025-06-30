@@ -20,5 +20,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "../ReelCV/src/components/candidates", "../ReelCV/src/components/search"]
 }
