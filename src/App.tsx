@@ -8,9 +8,10 @@ import SettingsPage from './pages/SettingsPage'
 import ScorecardsPage from './pages/ScorecardsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import LoadingSpinner from './components/common/LoadingSpinner'
+import LoginManager from './components/auth/LoginManager'
 
 function App() {
-  const { isLoading, isAuthenticated } = useAuth()
+  const { isLoading } = useAuth()
 
   if (isLoading) {
     return (
@@ -26,17 +27,20 @@ function App() {
   // For now, skip authentication and go directly to the search page
   // TODO: Implement proper authentication flow
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/search" replace />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/pipeline" element={<PipelinePage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/scorecards" element={<ScorecardsPage />} />
-        <Route path="/my-stats" element={<MyStatsPage />} />
-      </Routes>
-    </Router>
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/search" replace />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/pipeline" element={<PipelinePage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/scorecards" element={<ScorecardsPage />} />
+          <Route path="/my-stats" element={<MyStatsPage />} />
+        </Routes>
+      </Router>
+      <LoginManager />
+    </>
   )
 }
 
