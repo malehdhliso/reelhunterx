@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '../components/layout/DashboardLayout'
-import { Search, Filter, Users, Shield, Clock, Star, AlertTriangle } from 'lucide-react'
+import { Search, Filter, Users, Shield, Clock, Star, AlertTriangle, X, ChevronDown, MapPin, DollarSign, Calendar } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { searchCandidates, CandidateSearchResult, SearchFilters } from '../services/candidateService'
 import SetupProfileBanner from '../components/common/SetupProfileBanner'

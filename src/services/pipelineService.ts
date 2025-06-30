@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { PipelineStage, CandidatePipelinePosition, Profile } from './supabase'
+import type { PipelineStage, CandidatePipelinePosition, Profile } from '../types/supabase'
 
 export interface PipelineCandidate {
   id: string
@@ -30,7 +30,25 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
     }
 
     if (!stages || stages.length === 0) {
-      return []
+      // Create default stages if none exist
+      await createDefaultStages(recruiterId)
+      
+      // Fetch the newly created stages
+      const { data: newStages, error: newStagesError } = await supabase
+        .from('pipeline_stages')
+        .select('*')
+        .eq('recruiter_id', recruiterId)
+        .eq('is_active', true)
+        .order('stage_order')
+        
+      if (newStagesError || !newStages || newStages.length === 0) {
+        throw new Error(`Failed to create default pipeline stages: ${newStagesError?.message || 'Unknown error'}`)
+      }
+      
+      return newStages.map(stage => ({
+        ...stage,
+        candidates: []
+      }))
     }
 
     // Get candidate positions with profile data
@@ -102,6 +120,80 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
 
   } catch (error) {
     console.error('Error loading pipeline data:', error)
+    throw error
+  }
+}
+
+async function createDefaultStages(recruiterId: string): Promise<void> {
+  try {
+    const defaultStages = [
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Applied',
+        stage_order: 1,
+        stage_color: '#3b82f6',
+        auto_email_template: 'Thank you for your application. We have received your profile and will review it shortly.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Screening',
+        stage_order: 2,
+        stage_color: '#f59e0b',
+        auto_email_template: 'Congratulations! Your profile has passed our initial review. We would like to schedule a screening call with you.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Interview',
+        stage_order: 3,
+        stage_color: '#8b5cf6',
+        auto_email_template: 'Great news! We would like to invite you for an interview. Please let us know your availability for the coming week.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Final Review',
+        stage_order: 4,
+        stage_color: '#f97316',
+        auto_email_template: 'You have progressed to our final review stage. We will be in touch with next steps within 2-3 business days.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Offer',
+        stage_order: 5,
+        stage_color: '#10b981',
+        auto_email_template: 'Excellent! We are pleased to extend you an offer. Please review the attached details and let us know if you have any questions.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Hired',
+        stage_order: 6,
+        stage_color: '#059669',
+        auto_email_template: 'Welcome to the team! We are excited to have you on board. HR will be in touch with onboarding details.',
+        is_active: true
+      },
+      {
+        recruiter_id: recruiterId,
+        stage_name: 'Rejected',
+        stage_order: 7,
+        stage_color: '#ef4444',
+        auto_email_template: 'Thank you for your time and interest in our company. While we will not be moving forward with your application at this time, we encourage you to apply for future opportunities that match your skills.',
+        is_active: true
+      }
+    ]
+    
+    const { error } = await supabase
+      .from('pipeline_stages')
+      .insert(defaultStages)
+      
+    if (error) {
+      throw new Error(`Failed to create default stages: ${error.message}`)
+    }
+  } catch (error) {
+    console.error('Error creating default pipeline stages:', error)
     throw error
   }
 }
