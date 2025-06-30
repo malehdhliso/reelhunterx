@@ -88,6 +88,12 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearch }) => {
     }
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   const selectedCurrency = currencies.find(c => c.code === filters.currency)
 
   return (
@@ -114,7 +120,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearch }) => {
             placeholder="Search for roles, skills, or technologies in ReelCV candidates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyPress={handleKeyPress}
             className="w-full pl-16 pr-40 py-5 bg-background-panel border border-gray-600 rounded-2xl text-lg text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 shadow-lg"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-3">
