@@ -116,6 +116,28 @@ export const useAuth = () => {
     return data
   }
 
+  const signUp = async (email: string, password: string, userData?: { firstName?: string, lastName?: string }) => {
+    console.log("Signing up with email:", email)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: userData?.firstName || '',
+          last_name: userData?.lastName || '',
+          full_name: userData?.firstName && userData?.lastName 
+            ? `${userData.firstName} ${userData.lastName}` 
+            : ''
+        }
+      }
+    })
+    
+    if (error) throw error
+    
+    console.log("Sign up successful:", data.user?.id)
+    return data
+  }
+
   const signOut = async () => {
     console.log("Signing out")
     const { error } = await supabase.auth.signOut()
@@ -144,6 +166,7 @@ export const useAuth = () => {
     accessToken: session?.access_token || null,
     initialize,
     signIn,
+    signUp,
     signOut,
     getAccessToken
   }
