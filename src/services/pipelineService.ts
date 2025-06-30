@@ -52,6 +52,25 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
       throw new Error(`Failed to fetch candidate positions: ${positionsError.message}`)
     }
 
+    // Get latest communications for each candidate
+    const { data: communications, error: communicationsError } = await supabase
+      .from('candidate_communications')
+      .select('candidate_id, sent_at')
+      .eq('recruiter_id', recruiterId)
+      .order('sent_at', { ascending: false })
+
+    if (communicationsError) {
+      console.error('Failed to fetch communications:', communicationsError)
+    }
+
+    // Group communications by candidate
+    const latestCommunicationByCandidate = (communications || []).reduce((acc, comm) => {
+      if (!acc[comm.candidate_id] || new Date(comm.sent_at) > new Date(acc[comm.candidate_id])) {
+        acc[comm.candidate_id] = comm.sent_at
+      }
+      return acc
+    }, {} as Record<string, string>)
+
     // Group candidates by stage
     const candidatesByStage = (positions || []).reduce((acc, position) => {
       const stageId = position.current_stage_id
@@ -68,7 +87,7 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
           avatar: `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'UN',
           addedAt: position.created_at,
           notes: position.notes || undefined,
-          lastCommunication: position.moved_at
+          lastCommunication: latestCommunicationByCandidate[profile.id]
         })
       }
 
@@ -95,22 +114,49 @@ export async function moveCandidateToStage(
   notes?: string
 ): Promise<void> {
   try {
-    // Update the candidate's pipeline position
-    const { error } = await supabase
+    // Check if candidate is already in the pipeline
+    const { data: existingPosition, error: checkError } = await supabase
       .from('candidate_pipeline_positions')
-      .update({
-        previous_stage_id: fromStageId,
-        current_stage_id: toStageId,
-        moved_at: new Date().toISOString(),
-        moved_by: recruiterId,
-        notes: notes || null,
-        updated_at: new Date().toISOString()
-      })
+      .select('id')
       .eq('candidate_id', candidateId)
       .eq('recruiter_id', recruiterId)
+      .single()
 
-    if (error) {
-      throw new Error(`Failed to move candidate: ${error.message}`)
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      throw new Error(`Failed to check candidate position: ${checkError.message}`)
+    }
+
+    if (existingPosition) {
+      // Update existing position
+      const { error } = await supabase
+        .from('candidate_pipeline_positions')
+        .update({
+          previous_stage_id: fromStageId,
+          current_stage_id: toStageId,
+          moved_at: new Date().toISOString(),
+          notes: notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingPosition.id)
+
+      if (error) {
+        throw new Error(`Failed to update candidate position: ${error.message}`)
+      }
+    } else {
+      // Insert new position
+      const { error } = await supabase
+        .from('candidate_pipeline_positions')
+        .insert({
+          recruiter_id: recruiterId,
+          candidate_id: candidateId,
+          current_stage_id: toStageId,
+          moved_at: new Date().toISOString(),
+          notes: notes || null
+        })
+
+      if (error) {
+        throw new Error(`Failed to insert candidate position: ${error.message}`)
+      }
     }
   } catch (error) {
     console.error('Error moving candidate:', error)
@@ -125,6 +171,23 @@ export async function addCandidateToPipeline(
   notes?: string
 ): Promise<void> {
   try {
+    // Check if candidate is already in the pipeline
+    const { data: existingPosition, error: checkError } = await supabase
+      .from('candidate_pipeline_positions')
+      .select('id')
+      .eq('candidate_id', candidateId)
+      .eq('recruiter_id', recruiterId)
+      .single()
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      throw new Error(`Failed to check candidate position: ${checkError.message}`)
+    }
+
+    if (existingPosition) {
+      throw new Error('Candidate is already in your pipeline')
+    }
+
+    // Insert new position
     const { error } = await supabase
       .from('candidate_pipeline_positions')
       .insert({
@@ -132,7 +195,6 @@ export async function addCandidateToPipeline(
         candidate_id: candidateId,
         current_stage_id: stageId,
         moved_at: new Date().toISOString(),
-        moved_by: recruiterId,
         notes: notes || null
       })
 
@@ -162,5 +224,30 @@ export async function removeCandidateFromPipeline(
   } catch (error) {
     console.error('Error removing candidate from pipeline:', error)
     throw error
+  }
+}
+
+export async function getDefaultPipelineStage(recruiterId: string): Promise<string | null> {
+  try {
+    // Get the "Applied" stage or the first stage
+    const { data, error } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('recruiter_id', recruiterId)
+      .eq('is_active', true)
+      .or('stage_name.eq.Applied,stage_order.eq.1')
+      .order('stage_order')
+      .limit(1)
+      .single()
+
+    if (error) {
+      console.error('Failed to get default pipeline stage:', error)
+      return null
+    }
+
+    return data?.id || null
+  } catch (error) {
+    console.error('Error getting default pipeline stage:', error)
+    return null
   }
 }

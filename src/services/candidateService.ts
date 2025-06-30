@@ -86,6 +86,17 @@ export async function searchCandidates(
       queryBuilder = queryBuilder.contains('location_preferences', [filters.location])
     }
 
+    // Apply province filter (SA specific)
+    if (filters.province) {
+      queryBuilder = queryBuilder.eq('province', filters.province.toLowerCase().replace(' ', '_'))
+    }
+
+    // Apply BEE level filter (SA specific)
+    if (filters.beeLevel) {
+      const beeLevel = filters.beeLevel.toLowerCase().replace(/\s+/g, '_')
+      queryBuilder = queryBuilder.eq('bee_status', beeLevel)
+    }
+
     // Execute the query
     const { data, error } = await queryBuilder.limit(50)
 
@@ -135,7 +146,9 @@ export async function searchCandidates(
         locationPreferences: candidate.location_preferences || [],
         skills,
         lastActive: candidate.availability_updated_at || new Date().toISOString(),
-        currency: filters.currency || 'USD'
+        currency: filters.currency || 'USD',
+        province: candidate.province || undefined,
+        beeStatus: candidate.bee_status || undefined
       }
     })
 
@@ -146,6 +159,16 @@ export async function searchCandidates(
           candidate.skills.some(candidateSkill => 
             candidateSkill.toLowerCase().includes(skill.toLowerCase())
           )
+        )
+      )
+    }
+
+    // Apply languages filter (client-side for now)
+    if (filters.languages && filters.languages.length > 0) {
+      return candidates.filter(candidate => 
+        candidate.languages && 
+        filters.languages!.some(lang => 
+          candidate.languages!.includes(lang as any)
         )
       )
     }
@@ -233,77 +256,5 @@ export async function getCandidateById(id: string): Promise<CandidateSearchResul
   } catch (error) {
     console.error('Error fetching candidate:', error)
     return null
-  }
-}
-
-export async function getRecruiterRatings(): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from('recruiter_ratings_summary')
-      .select('*')
-      .order('overall_rating', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching recruiter ratings:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error fetching recruiter ratings:', error)
-    return []
-  }
-}
-
-export async function getPipelineStages(recruiterId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('pipeline_stages')
-      .select('*')
-      .eq('recruiter_id', recruiterId)
-      .eq('is_active', true)
-      .order('stage_order')
-
-    if (error) {
-      console.error('Error fetching pipeline stages:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error fetching pipeline stages:', error)
-    return []
-  }
-}
-
-export async function getCandidatePipelinePositions(recruiterId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('candidate_pipeline_positions')
-      .select(`
-        *,
-        profiles!candidate_id (
-          first_name,
-          last_name,
-          email,
-          headline
-        ),
-        pipeline_stages!current_stage_id (
-          stage_name,
-          stage_color
-        )
-      `)
-      .eq('recruiter_id', recruiterId)
-      .order('moved_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching pipeline positions:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error fetching pipeline positions:', error)
-    return []
   }
 }

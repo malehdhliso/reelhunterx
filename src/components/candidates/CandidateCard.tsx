@@ -1,28 +1,11 @@
 import React from 'react'
 import { Shield, CheckCircle, Clock, MapPin, DollarSign, Star, Calendar, Video, Award } from 'lucide-react'
+import { CandidateSearchResult } from '../../services/candidateService'
 
 interface CandidateCardProps {
-  candidate: {
-    id: string
-    firstName: string
-    lastName: string
-    headline: string
-    email: string
-    reelpassScore: number
-    verificationStatus: 'verified' | 'partial' | 'unverified'
-    availabilityStatus: 'available' | 'open' | 'not-looking'
-    availableFrom?: string
-    noticePeriodDays?: number
-    salaryExpectationMin?: number
-    salaryExpectationMax?: number
-    preferredWorkType?: string
-    locationPreferences?: string[]
-    skills: string[]
-    lastActive: string
-    currency?: string
-  }
-  onSelect?: (candidate: any) => void
-  onAddToPipeline?: (candidate: any) => void
+  candidate: CandidateSearchResult
+  onSelect?: (candidate: CandidateSearchResult) => void
+  onAddToPipeline?: (candidate: CandidateSearchResult) => void
 }
 
 const CandidateCard: React.FC<CandidateCardProps> = ({ 

@@ -162,3 +162,30 @@ export async function getRecruiterReviews(recruiterId: string) {
     return []
   }
 }
+
+export async function disputeReview(
+  reviewId: string,
+  reason: string,
+  details: string
+): Promise<void> {
+  try {
+    // In a real implementation, this would create a dispute record
+    // For now, we'll just mark the review as disputed
+    const { error } = await supabase
+      .from('recruiter_scorecards')
+      .update({ 
+        is_disputed: true,
+        dispute_reason: reason,
+        dispute_details: details,
+        dispute_date: new Date().toISOString()
+      })
+      .eq('id', reviewId)
+
+    if (error) {
+      throw new Error(`Failed to dispute review: ${error.message}`)
+    }
+  } catch (error) {
+    console.error('Error disputing review:', error)
+    throw error
+  }
+}

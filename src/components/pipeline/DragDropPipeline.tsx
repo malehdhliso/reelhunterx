@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Users, Plus, MoreVertical, Mail, Phone, MessageSquare, Calendar, Star, Clock, CheckCircle, AlertTriangle, X, XCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { supabase } from '../../services/supabase'
 import { loadPipelineData, moveCandidateToStage, type PipelineStageWithCandidates, type PipelineCandidate } from '../../services/pipelineService'
 
 interface MoveConfirmationModal {
