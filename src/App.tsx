@@ -7,6 +7,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import ScorecardsPage from './pages/ScorecardsPage'
 import MyStatsPage from './pages/MyStatsPage'
+import CandidateSetupPage from './pages/CandidateSetupPage'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import LoginManager from './components/auth/LoginManager'
 
@@ -24,8 +25,6 @@ function App() {
     )
   }
 
-  // For now, skip authentication and go directly to the search page
-  // TODO: Implement proper authentication flow
   return (
     <>
       <Router>
@@ -37,6 +36,7 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/scorecards" element={<ScorecardsPage />} />
           <Route path="/my-stats" element={<MyStatsPage />} />
+          <Route path="/setup-profile" element={<CandidateSetupPage />} />
         </Routes>
       </Router>
       <LoginManager />
