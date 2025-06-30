@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Search, Users, BarChart3, Settings, Menu, X, Shield, Bell, User, Briefcase, Upload, Calendar, Award, TrendingUp } from 'lucide-react'
 import { useLocation, Link } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import CreateJobModal from '../modals/CreateJobModal'
 import ImportCandidatesModal from '../modals/ImportCandidatesModal'
 import ScheduleInterviewModal from '../modals/ScheduleInterviewModal'
@@ -10,6 +11,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { user, signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [createJobModalOpen, setCreateJobModalOpen] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
@@ -44,6 +46,34 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   ]
 
   const isActive = (href: string) => location.pathname === href
+
+  // Get user display name and initials
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name
+    }
+    if (user?.email) {
+      return user.email.split('@')[0]
+    }
+    return 'User'
+  }
+
+  const getUserInitials = () => {
+    const displayName = getUserDisplayName()
+    if (displayName.includes(' ')) {
+      const parts = displayName.split(' ')
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return displayName.slice(0, 2).toUpperCase()
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background-primary">
@@ -139,18 +169,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <div className="p-4 border-t border-gray-700 flex-shrink-0">
             <div className="flex items-center space-x-3 min-w-0">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-semibold text-sm">JD</span>
+                <span className="text-white font-semibold text-sm">{getUserInitials()}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">John Doe</p>
+                <p className="text-sm font-medium text-text-primary truncate">{getUserDisplayName()}</p>
                 <p className="text-xs text-text-muted truncate">Talent Acquisition Lead</p>
               </div>
-              <Link 
-                to="/settings"
-                className="text-text-muted hover:text-text-primary transition-colors duration-200 flex-shrink-0"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
+              <div className="flex items-center space-x-1">
+                <Link 
+                  to="/settings"
+                  className="text-text-muted hover:text-text-primary transition-colors duration-200 flex-shrink-0 p-1"
+                >
+                  <Settings className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="text-text-muted hover:text-red-400 transition-colors duration-200 flex-shrink-0 p-1"
+                  title="Sign Out"
+                >
+                  <User className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -193,9 +232,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             {/* User info - Locked text */}
             <div className="flex items-center space-x-2 px-3 py-2 bg-background-card rounded-lg min-w-0">
               <div className="w-6 h-6 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-3 h-3 text-white" />
+                <span className="text-white font-semibold text-xs">{getUserInitials()}</span>
               </div>
-              <span className="text-sm font-medium text-text-primary hidden sm:block truncate">John Doe</span>
+              <span className="text-sm font-medium text-text-primary hidden sm:block truncate">{getUserDisplayName()}</span>
             </div>
           </div>
         </header>
