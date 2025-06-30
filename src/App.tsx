@@ -12,6 +12,8 @@ import LoginManager from './components/auth/LoginManager';
 function App() {
   const { isLoading } = useAuth();
 
+  // By moving the conditional logic inside the main return,
+  // the hook structure remains the same on every render, fixing the error.
   return (
     <Router>
       {isLoading ? (
