@@ -866,6 +866,70 @@ export type Database = {
           },
         ]
       }
+      interview_participants: {
+        Row: {
+          created_at: string
+          id: string
+          interview_id: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interview_id: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interview_id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_participants_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "live_candidate_availability"
+            referencedColumns: ["candidate_id"]
+          },
+          {
+            foreignKeyName: "interview_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_ratings_summary"
+            referencedColumns: ["recruiter_id"]
+          },
+          {
+            foreignKeyName: "interview_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "reelpass_status"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "interview_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "sa_reelpass_status"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       interviews: {
         Row: {
           candidate_email: string
@@ -874,7 +938,6 @@ export type Database = {
           duration_minutes: number
           id: string
           interview_type: Database["public"]["Enums"]["interview_type"]
-          interviewers: string[]
           location: string | null
           meeting_id: string | null
           meeting_url: string | null
@@ -892,7 +955,6 @@ export type Database = {
           duration_minutes?: number
           id?: string
           interview_type: Database["public"]["Enums"]["interview_type"]
-          interviewers?: string[]
           location?: string | null
           meeting_id?: string | null
           meeting_url?: string | null
@@ -910,7 +972,6 @@ export type Database = {
           duration_minutes?: number
           id?: string
           interview_type?: Database["public"]["Enums"]["interview_type"]
-          interviewers?: string[]
           location?: string | null
           meeting_id?: string | null
           meeting_url?: string | null
@@ -1573,7 +1634,43 @@ export type Database = {
           revoked?: boolean
           slug?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "public_cv_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "live_candidate_availability"
+            referencedColumns: ["candidate_id"]
+          },
+          {
+            foreignKeyName: "public_cv_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_cv_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_ratings_summary"
+            referencedColumns: ["recruiter_id"]
+          },
+          {
+            foreignKeyName: "public_cv_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "reelpass_status"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "public_cv_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "sa_reelpass_status"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       recruiter_scorecards: {
         Row: {
