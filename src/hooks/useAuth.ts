@@ -1,139 +1,63 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../services/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true) // Start true
   const [isEmployer, setIsEmployer] = useState(false)
-  const [initialized, setInitialized] = useState(false)
-
-  // Always define useCallback - never conditionally
-  const initialize = useCallback(async () => {
-    if (initialized) {
-      console.log("useAuth - Already initialized, skipping")
-      return
-    }
-
-    try {
-      console.log("useAuth - initialize called")
-      setIsLoading(true)
-      
-      // Get current session
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      console.log("Current session:", currentSession ? "Found" : "None")
-      
-      if (currentSession) {
-        setSession(currentSession)
-        setUser(currentSession.user)
-        
-        // Check if user is an employer/recruiter
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', currentSession.user.id)
-          .single()
-        
-        console.log("Profile check result:", { profile, error })
-        
-        setIsEmployer(profile?.role === 'recruiter')
-      } else {
-        setSession(null)
-        setUser(null)
-        setIsEmployer(false)
-      }
-      
-      setInitialized(true)
-    } catch (error) {
-      console.error('Error initializing auth:', error)
-      setInitialized(true)
-    } finally {
-      console.log("useAuth - initialize completed, setting isLoading to false")
-      setIsLoading(false)
-    }
-  }, [initialized])
 
   useEffect(() => {
-    console.log("useAuth - useEffect running, initialized:", initialized)
-    
-    // Set up auth state change listener first (only once)
+    // onAuthStateChange handles both initial session and subsequent changes.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log("Auth state changed:", event, newSession ? "Session exists" : "No session")
-        
-        setSession(newSession)
-        setUser(newSession?.user || null)
-        
-        if (newSession?.user) {
-          // Check if user is an employer/recruiter
-          try {
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('user_id', newSession.user.id)
-              .single()
-            
-            console.log("Profile check on auth change:", { profile, error })
-            
-            setIsEmployer(profile?.role === 'recruiter')
-          } catch (error) {
-            console.error('Error checking profile on auth change:', error)
-            setIsEmployer(false)
-          }
+      async (_event, session) => {
+        setSession(session)
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+
+        if (currentUser) {
+          // If there's a user, check their role.
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .single()
+          setIsEmployer(profile?.role === 'recruiter')
         } else {
           setIsEmployer(false)
         }
-        
-        // Always set loading to false after auth state change
-        console.log("Auth state change completed, setting isLoading to false")
+        // This is the crucial part: set loading to false AFTER the first auth check.
         setIsLoading(false)
-        setInitialized(true)
       }
     )
-    
-    // Only initialize if not already initialized
-    if (!initialized) {
-      initialize()
-    }
-    
-    // Cleanup function
+
+    // Cleanup subscription on component unmount
     return () => {
       subscription.unsubscribe()
     }
-  }, [initialize, initialized])
+  }, []) // Empty dependency array ensures this runs only once.
 
-  const signIn = async (email: string, password: string) => {
-    console.log("Signing in with email:", email)
-    const { data, error } = await supabase.auth.signInWithPassword({
+  const signIn = (email: string, password: string) => {
+    return supabase.auth.signInWithPassword({ email, password })
+  }
+
+  const signUp = (email: string, password: string, userData?: { firstName?: string, lastName?: string }) => {
+    return supabase.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        data: {
+          first_name: userData?.firstName || '',
+          last_name: userData?.lastName || '',
+        }
+      }
     })
-    
-    if (error) throw error
-    
-    console.log("Sign in successful:", data.user?.id)
-    return data
   }
 
-  const signOut = async () => {
-    console.log("Signing out")
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
-    console.log("Sign out successful")
+  const signOut = () => {
+    return supabase.auth.signOut()
   }
-
-  const getAccessToken = () => {
-    return session?.access_token || null
-  }
-
-  console.log("useAuth - Current state:", { 
-    isLoading, 
-    isAuthenticated: !!user, 
-    userId: user?.id,
-    isEmployer,
-    initialized
-  })
 
   return {
     user,
@@ -141,10 +65,8 @@ export const useAuth = () => {
     isLoading,
     isEmployer,
     isAuthenticated: !!user,
-    accessToken: session?.access_token || null,
-    initialize,
     signIn,
+    signUp,
     signOut,
-    getAccessToken
   }
 }

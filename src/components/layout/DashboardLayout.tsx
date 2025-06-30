@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Search, Users, BarChart3, Settings, Menu, X, Shield, Bell, User, Briefcase, Upload, Calendar, Award, TrendingUp } from 'lucide-react'
+import { Search, Users, BarChart3, Settings, Menu, X, Shield, Bell, User, Briefcase, Upload, Calendar, TrendingUp } from 'lucide-react'
 import { useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import CreateJobModal from '../modals/CreateJobModal'
@@ -21,7 +21,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigationItems = [
     { icon: Search, label: 'Search Talent', href: '/search' },
     { icon: Users, label: 'My Pipeline', href: '/pipeline' },
-    { icon: Award, label: 'Recruiter Scorecards', href: '/scorecards' },
     { icon: TrendingUp, label: 'My Stats & Reviews', href: '/my-stats' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
     { icon: Settings, label: 'Settings', href: '/settings' },
