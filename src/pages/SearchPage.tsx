@@ -6,6 +6,7 @@ import { Search, Filter, Users, Shield, Clock, Star } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { searchCandidates, CandidateSearchResult, SearchFilters } from '../services/candidateService'
 import SetupProfileBanner from '../components/common/SetupProfileBanner'
+import { supabase } from '../services/supabase'
 
 const SearchPage: React.FC = () => {
   const { isAuthenticated, user } = useAuth()
