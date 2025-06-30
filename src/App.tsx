@@ -5,7 +5,6 @@ import SearchPage from './pages/SearchPage'
 import PipelinePage from './pages/PipelinePage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
-import ScorecardsPage from './pages/ScorecardsPage'
 import MyStatsPage from './pages/MyStatsPage'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import LoginManager from './components/auth/LoginManager'
@@ -38,9 +37,8 @@ function App() {
           <Route path="/pipeline" element={<PipelinePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/scorecards" element={<ScorecardsPage />} />
           <Route path="/my-stats" element={<MyStatsPage />} />
-          {/* Removed candidate setup route since this is for recruiters only */}
+          {/* Removed scorecards route */}
         </Routes>
       </Router>
       <LoginManager />
