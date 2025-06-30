@@ -10,21 +10,25 @@ export const useAuth = () => {
 
   const initialize = useCallback(async () => {
     try {
+      console.log("useAuth - initialize called")
       setIsLoading(true)
       
       // Get current session
       const { data: { session: currentSession } } = await supabase.auth.getSession()
+      console.log("Current session:", currentSession ? "Found" : "None")
       
       if (currentSession) {
         setSession(currentSession)
         setUser(currentSession.user)
         
         // Check if user is an employer/recruiter
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('user_id', currentSession.user.id)
           .single()
+        
+        console.log("Profile check result:", { profile, error })
         
         setIsEmployer(profile?.role === 'recruiter')
       }
@@ -36,21 +40,25 @@ export const useAuth = () => {
   }, [])
 
   useEffect(() => {
+    console.log("useAuth - useEffect running")
     initialize()
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log("Auth state changed:", event, newSession ? "Session exists" : "No session")
         setSession(newSession)
         setUser(newSession?.user || null)
         
         if (newSession?.user) {
           // Check if user is an employer/recruiter
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('role')
             .eq('user_id', newSession.user.id)
             .single()
+          
+          console.log("Profile check on auth change:", { profile, error })
           
           setIsEmployer(profile?.role === 'recruiter')
         } else {
@@ -67,6 +75,7 @@ export const useAuth = () => {
   }, [initialize])
 
   const signIn = async (email: string, password: string) => {
+    console.log("Signing in with email:", email)
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -74,12 +83,15 @@ export const useAuth = () => {
     
     if (error) throw error
     
+    console.log("Sign in successful:", data.user?.id)
     return data
   }
 
   const signOut = async () => {
+    console.log("Signing out")
     const { error } = await supabase.auth.signOut()
     if (error) throw error
+    console.log("Sign out successful")
   }
 
   const getAccessToken = () => {

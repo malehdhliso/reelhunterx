@@ -17,6 +17,8 @@ export interface PipelineStageWithCandidates extends PipelineStage {
 
 export async function loadPipelineData(recruiterId: string): Promise<PipelineStageWithCandidates[]> {
   try {
+    console.log("pipelineService.loadPipelineData - Starting with recruiterId:", recruiterId)
+    
     // Get pipeline stages
     const { data: stages, error: stagesError } = await supabase
       .from('pipeline_stages')
@@ -25,11 +27,14 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
       .eq('is_active', true)
       .order('stage_order')
 
+    console.log("Pipeline stages query result:", { stages, error: stagesError })
+
     if (stagesError) {
       throw new Error(`Failed to fetch pipeline stages: ${stagesError.message}`)
     }
 
     if (!stages || stages.length === 0) {
+      console.log("No stages found, creating default stages")
       // Create default stages if none exist
       await createDefaultStages(recruiterId)
       
@@ -40,6 +45,8 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
         .eq('recruiter_id', recruiterId)
         .eq('is_active', true)
         .order('stage_order')
+      
+      console.log("New stages query result:", { newStages, error: newStagesError })
         
       if (newStagesError || !newStages || newStages.length === 0) {
         throw new Error(`Failed to create default pipeline stages: ${newStagesError?.message || 'Unknown error'}`)
@@ -66,6 +73,11 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
       `)
       .eq('recruiter_id', recruiterId)
 
+    console.log("Candidate positions query result:", { 
+      positionsCount: positions?.length || 0, 
+      error: positionsError 
+    })
+
     if (positionsError) {
       throw new Error(`Failed to fetch candidate positions: ${positionsError.message}`)
     }
@@ -76,6 +88,11 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
       .select('candidate_id, sent_at')
       .eq('recruiter_id', recruiterId)
       .order('sent_at', { ascending: false })
+
+    console.log("Communications query result:", { 
+      communicationsCount: communications?.length || 0, 
+      error: communicationsError 
+    })
 
     if (communicationsError) {
       console.error('Failed to fetch communications:', communicationsError)
@@ -112,11 +129,16 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
       return acc
     }, {} as Record<string, PipelineCandidate[]>)
 
+    console.log("Candidates grouped by stage:", Object.keys(candidatesByStage).length)
+
     // Combine stages with their candidates
-    return stages.map(stage => ({
+    const result = stages.map(stage => ({
       ...stage,
       candidates: candidatesByStage[stage.id] || []
     }))
+
+    console.log("Final pipeline data:", result.length, "stages")
+    return result
 
   } catch (error) {
     console.error('Error loading pipeline data:', error)
@@ -124,8 +146,9 @@ export async function loadPipelineData(recruiterId: string): Promise<PipelineSta
   }
 }
 
-async function createDefaultStages(recruiterId: string): Promise<void> {
+export async function createDefaultStages(recruiterId: string): Promise<void> {
   try {
+    console.log("Creating default stages for recruiter:", recruiterId)
     const defaultStages = [
       {
         recruiter_id: recruiterId,
@@ -185,9 +208,12 @@ async function createDefaultStages(recruiterId: string): Promise<void> {
       }
     ]
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('pipeline_stages')
       .insert(defaultStages)
+      .select()
+      
+    console.log("Default stages creation result:", { data, error })
       
     if (error) {
       throw new Error(`Failed to create default stages: ${error.message}`)
@@ -206,6 +232,8 @@ export async function moveCandidateToStage(
   notes?: string
 ): Promise<void> {
   try {
+    console.log("Moving candidate:", { candidateId, fromStageId, toStageId, recruiterId })
+    
     // Check if candidate is already in the pipeline
     const { data: existingPosition, error: checkError } = await supabase
       .from('candidate_pipeline_positions')
@@ -214,13 +242,15 @@ export async function moveCandidateToStage(
       .eq('recruiter_id', recruiterId)
       .single()
 
+    console.log("Check existing position result:", { existingPosition, error: checkError })
+
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
       throw new Error(`Failed to check candidate position: ${checkError.message}`)
     }
 
     if (existingPosition) {
       // Update existing position
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('candidate_pipeline_positions')
         .update({
           previous_stage_id: fromStageId,
@@ -230,13 +260,16 @@ export async function moveCandidateToStage(
           updated_at: new Date().toISOString()
         })
         .eq('id', existingPosition.id)
+        .select()
+
+      console.log("Update position result:", { data, error })
 
       if (error) {
         throw new Error(`Failed to update candidate position: ${error.message}`)
       }
     } else {
       // Insert new position
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('candidate_pipeline_positions')
         .insert({
           recruiter_id: recruiterId,
@@ -245,6 +278,9 @@ export async function moveCandidateToStage(
           moved_at: new Date().toISOString(),
           notes: notes || null
         })
+        .select()
+
+      console.log("Insert position result:", { data, error })
 
       if (error) {
         throw new Error(`Failed to insert candidate position: ${error.message}`)
@@ -263,6 +299,8 @@ export async function addCandidateToPipeline(
   notes?: string
 ): Promise<void> {
   try {
+    console.log("Adding candidate to pipeline:", { candidateId, recruiterId, stageId })
+    
     // Check if candidate is already in the pipeline
     const { data: existingPosition, error: checkError } = await supabase
       .from('candidate_pipeline_positions')
@@ -270,6 +308,8 @@ export async function addCandidateToPipeline(
       .eq('candidate_id', candidateId)
       .eq('recruiter_id', recruiterId)
       .single()
+
+    console.log("Check existing position result:", { existingPosition, error: checkError })
 
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
       throw new Error(`Failed to check candidate position: ${checkError.message}`)
@@ -280,7 +320,7 @@ export async function addCandidateToPipeline(
     }
 
     // Insert new position
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('candidate_pipeline_positions')
       .insert({
         recruiter_id: recruiterId,
@@ -289,6 +329,9 @@ export async function addCandidateToPipeline(
         moved_at: new Date().toISOString(),
         notes: notes || null
       })
+      .select()
+
+    console.log("Insert position result:", { data, error })
 
     if (error) {
       throw new Error(`Failed to add candidate to pipeline: ${error.message}`)
@@ -304,11 +347,16 @@ export async function removeCandidateFromPipeline(
   recruiterId: string
 ): Promise<void> {
   try {
-    const { error } = await supabase
+    console.log("Removing candidate from pipeline:", { candidateId, recruiterId })
+    
+    const { data, error } = await supabase
       .from('candidate_pipeline_positions')
       .delete()
       .eq('candidate_id', candidateId)
       .eq('recruiter_id', recruiterId)
+      .select()
+
+    console.log("Remove position result:", { data, error })
 
     if (error) {
       throw new Error(`Failed to remove candidate from pipeline: ${error.message}`)
@@ -321,6 +369,8 @@ export async function removeCandidateFromPipeline(
 
 export async function getDefaultPipelineStage(recruiterId: string): Promise<string | null> {
   try {
+    console.log("Getting default pipeline stage for recruiter:", recruiterId)
+    
     // Get the "Applied" stage or the first stage
     const { data, error } = await supabase
       .from('pipeline_stages')
@@ -331,6 +381,8 @@ export async function getDefaultPipelineStage(recruiterId: string): Promise<stri
       .order('stage_order')
       .limit(1)
       .single()
+
+    console.log("Default stage query result:", { data, error })
 
     if (error) {
       console.error('Failed to get default pipeline stage:', error)

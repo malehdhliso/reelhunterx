@@ -262,6 +262,7 @@ const SearchInterface = ({ onSearch }) => {
   }
 
   const handleSearch = () => {
+    console.log("Search interface - handleSearch called with:", { query: searchQuery, ...filters })
     if (onSearch) {
       onSearch({
         query: searchQuery,
@@ -554,6 +555,8 @@ const SearchPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
 
+  console.log("SearchPage - Auth state:", { isAuthenticated, userId: user?.id })
+
   // Check if user needs to set up their profile
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -563,12 +566,15 @@ const SearchPage: React.FC = () => {
 
   const checkProfileStatus = async () => {
     try {
+      console.log("Checking profile status for user:", user?.id)
       // Check if the user has a profile with required fields
       const { data, error } = await supabase
         .from('profiles')
         .select('first_name, last_name, headline, completion_score')
         .eq('user_id', user!.id)
         .single()
+
+      console.log("Profile status check result:", { data, error })
 
       if (error) {
         console.error('Error checking profile status:', error)
@@ -596,6 +602,7 @@ const SearchPage: React.FC = () => {
     
     try {
       const results = await searchCandidates(searchData.query, searchData)
+      console.log("Search results:", results.length, "candidates found")
       setSearchResults(results)
       setShowResults(true)
     } catch (error) {

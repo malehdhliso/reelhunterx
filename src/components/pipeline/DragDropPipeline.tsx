@@ -32,6 +32,7 @@ const DragDropPipeline: React.FC = () => {
 
   // Load pipeline data on component mount
   useEffect(() => {
+    console.log("DragDropPipeline - Auth state:", { isAuthenticated, userId: user?.id })
     if (isAuthenticated && user) {
       loadPipelineDataForUser()
     }
@@ -39,6 +40,7 @@ const DragDropPipeline: React.FC = () => {
 
   const loadPipelineDataForUser = async () => {
     try {
+      console.log("Loading pipeline data for user")
       setIsLoading(true)
       
       // Get the user's profile to find their recruiter ID
@@ -49,13 +51,17 @@ const DragDropPipeline: React.FC = () => {
         .eq('role', 'recruiter')
         .single()
 
+      console.log("Profile query result:", { profile, error: profileError })
+
       if (profileError || !profile) {
         console.error('Failed to get recruiter profile:', profileError)
         setStages([])
         return
       }
 
+      console.log("Calling loadPipelineData with profile ID:", profile.id)
       const pipelineData = await loadPipelineData(profile.id)
+      console.log("Pipeline data loaded:", pipelineData)
       setStages(pipelineData)
     } catch (error) {
       console.error('Failed to load pipeline data:', error)
@@ -347,6 +353,8 @@ const DragDropPipeline: React.FC = () => {
       </div>
     )
   }
+
+  console.log("Rendering pipeline with stages:", stages)
 
   return (
     <div className="space-y-6">
